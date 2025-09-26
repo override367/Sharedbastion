@@ -1,0 +1,54 @@
+{
+  "shared-bastion": {
+    "settings": {
+      "actorName": {
+        "name": "Party Bastion Name",
+        "hint": "Name of the shared Bastion actor."
+      },
+      "folderId": {
+        "name": "Party Bastion Folder",
+        "hint": "Folder for the Party Bastion actor."
+      }
+    },
+    "ui": {
+      "openSheet": "Character Sheet",
+      "addFacility": "Add Facility",
+      "assignHirelings": "Assign Hirelings",
+      "assignDefenders": "Assign Defenders",
+      "basicFacilities": "Basic Facilities",
+      "specialFacilities": "Special Facilities",
+      "noFacilitySelected": "Select a facility on the left to view its details.",
+      "levelFacility": "Level 5 Bastion Facility",
+      "prerequisite": "Prerequisite",
+      "space": "Space",
+      "maxHirelings": "Max Hirelings",
+      "maxDefenders": "Max Defenders",
+      "order": "Order",
+      "assignedHirelings": "Assigned Hirelings",
+      "assignedDefenders": "Assigned Defenders",
+      "noHirelings": "No hirelings assigned to this facility.",
+      "noDefenders": "No defenders assigned to this facility.",
+      "openBastion": "Open Bastion"
+    },
+    "dialogs": {
+      "addBasicFacility": "Add Basic Facility",
+      "addSpecialFacility": "Add Special Facility",
+      "createFacility": "Create",
+      "cancel": "Cancel",
+      "name": "Name",
+      "description": "Description",
+      "maxHirelings": "Max Hirelings",
+      "prerequisite": "Prerequisite",
+      "selectHirelings": "Select hirelings to assign to this facility",
+      "selectDefenders": "Select defenders to assign to this facility",
+      "maximum": "Maximum",
+      "assign": "Assign"
+    },
+    "notifications": {
+      "bastionNotFound": "Party Bastion not found!",
+      "maxOccupantsReached": "This facility already has the maximum number of {type}.",
+      "cannotHaveOccupants": "This facility cannot have {type}.",
+      "couldNotOpenSheet": "Could not open sheet."
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "manifestVersion": 1,
+  "name": "shared-bastion",
+  "title": "Shared Bastion",
+  "description": "Provides a Party Bastion actor and custom Bastion UI compatible with DnD5e's Bastion system",
+  "version": "0.2.0",
+  "minimumCoreVersion": "12",
+  "compatibleCoreVersion": "12.*",
+  "system": ["dnd5e"],
+  "scripts": [],
+  "esmodules": [
+    "src/module.js",
+    "src/party-bastion-sheet.js"
+  ],
+  "styles": ["styles/shared-bastion.css"],
+  "packs": [],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "socket": false,
+  "url": "https://github.com/yourusername/shared-bastion",
+  "manifest": "https://raw.githubusercontent.com/yourusername/shared-bastion/main/module.json",
+  "download": "https://github.com/yourusername/shared-bastion/archive/refs/tags/v0.2.0.zip"
+}

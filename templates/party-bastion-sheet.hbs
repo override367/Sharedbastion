@@ -1,0 +1,200 @@
+<form class="{{cssClass}} party-bastion" autocomplete="off">
+  {{!-- Header Section --}}
+  <header class="header-banner">
+    <div style="display:flex; align-items:center;">
+      <img src="{{actor.img}}" class="bastion-portrait" title="Click to change image">
+      <h1>{{actor.name}}</h1>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="open-character-sheet">
+        <i class="fas fa-user"></i> Character Sheet
+      </button>
+    </div>
+  </header>
+
+  {{!-- Main Body --}}
+  <div class="sheet-body">
+
+    {{!-- Left Rail: Facility List --}}
+    <aside class="left-rail">
+      <h2 class="section-header">Basic Facilities</h2>
+      <ul class="facility-list">
+        {{#each basicFacilities}}
+          <li class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}" data-facility-id="{{this.id}}">
+            <img src="{{this.img}}" class="facility-thumb" alt="{{this.name}}">
+            <span class="facility-label">{{this.name}}</span>
+          </li>
+        {{/each}}
+        <li class="add-facility empty-facility" data-type="basic" title="Add Basic Facility">
+          <i class="fas fa-plus"></i> Add Facility
+        </li>
+      </ul>
+
+      <h2 class="section-header">Special Facilities</h2>
+      <ul class="facility-list">
+        {{#each specialFacilities}}
+           <li class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}" data-facility-id="{{this.id}}">
+            <img src="{{this.img}}" class="facility-thumb" alt="{{this.name}}">
+            <span class="facility-label">{{this.name}}</span>
+          </li>
+        {{/each}}
+        <li class="add-facility empty-facility" data-type="special" title="Add Special Facility">
+          <i class="fas fa-plus"></i> Add Facility
+        </li>
+      </ul>
+    </aside>
+
+    {{!-- Right Pane: Facility Details --}}
+    <section class="right-pane">
+      {{#if selectedFacility}}
+        <img src="{{selectedFacility.img}}" class="facility-art" alt="{{selectedFacility.name}} Art">
+        <h3 class="facility-title">{{selectedFacility.name}}</h3>
+
+        <div class="facility-stats">
+          {{#if selectedFacility.system.level}}
+             <div><strong>Level {{selectedFacility.system.level}}</strong> {{selectedFacility.system.category}} Facility</div>
+          {{else if selectedFacility.system.category}}
+             <div><strong>Category:</strong> {{selectedFacility.system.category}}</div>
+          {{/if}}
+
+          {{#if selectedFacility.system.prerequisite.value}}
+            <div><strong>Prerequisite:</strong> {{selectedFacility.system.prerequisite.value}}</div>
+          {{/if}}
+
+          {{#if selectedFacility.system.space.value}}
+            <div><strong>Space:</strong> {{selectedFacility.system.space.value}}</div>
+          {{/if}}
+
+          <div><strong>Max Hirelings:</strong> {{hireling_max}}</div>
+          <div><strong>Max Defenders:</strong> {{defender_max}}</div>
+
+          {{!-- =====  ORDER + PROGRESS  ===== --}}
+          {{#if selectedFacility.system.order}}
+            {{#let selectedFacility.system.order as |order|}}
+              {{#if (and order.type (notEq order.type "none"))}}
+		<div class="facility-order-progress">
+		  <div class="order-label">
+			{{!-- icon (only if item & img both exist) --}}
+			{{#if order.item}}
+			  {{#if order.item.img}}
+				<img src="{{order.item.img}}" class="order-icon">
+			  {{/if}}
+			{{/if}}
+
+			{{capitalize order.type}}
+
+			{{!-- item name after a dash --}}
+			{{#if order.item}}
+			  {{#if order.item.name}} – {{order.item.name}}{{/if}}
+			{{/if}}
+		  </div>
+
+		  <button type="button"
+				  class="order-edit"
+				  data-facility-id="{{selectedFacility.id}}"
+				  title="Edit Order (opens Tidy5e dialog)">
+			<i class="fas fa-edit"></i>
+		  </button>
+		</div>
+
+
+                {{#if order.turnsTotal}}
+                  {{#let order.turnsTotal as |tot|}}
+                    {{#let order.turnsRemaining as |rem|}}
+                      {{#let (subtract tot rem) as |done|}}
+                        {{#let (divide (multiply done 100) tot) as |pct|}}
+                          <div class="progress-outer">
+                            <div class="progress-inner" style="width: {{pct}}%;"></div>
+                          </div>
+                          <div class="progress-text">{{done}} / {{tot}} turns</div>
+                        {{/let}}
+                      {{/let}}
+                    {{/let}}
+                  {{/let}}
+                {{/if}}
+              {{/if}}
+            {{/let}}
+          {{/if}}
+        </div>
+
+        <div class="facility-description">
+          {{{enrichedDescription}}}
+        </div>
+
+        {{!-- Hirelings --}}
+        {{#if hireling_max}}
+          <div class="occupant-section">
+            <h4 class="section-header">Assigned Hirelings ({{hireling_count}}/{{hireling_max}})</h4>
+            <div class="occupant-list">
+              {{#if hasHirelings}}
+                {{#each hirelings}}
+                  <div class="occupant-entry">
+                    <img src="{{this.img}}" class="occupant-avatar occupant-control" alt="{{this.name}}" title="Open {{this.name}}'s Sheet" data-uuid="{{this.uuid}}">
+                    <span class="occupant-name">{{this.name}}</span>
+                    <a class="occupant-remove" title="Remove {{this.name}}" data-uuid="{{this.uuid}}" data-type="hirelings"><i class="fas fa-times"></i></a>
+                  </div>
+                {{/each}}
+              {{/if}}
+
+              {{#if hireling_available}}
+                {{#times hireling_available}}
+                  <div class="occupant-entry empty assign-hireling" title="Assign Hireling">
+                    <div class="occupant-placeholder">
+                      <i class="fas fa-plus"></i>
+                    </div>
+                  </div>
+                {{/times}}
+              {{/if}}
+            </div>
+
+            {{#if hireling_available}}
+              <button type="button" class="assign-hireling assign-control">
+                <i class="fas fa-user-plus"></i> Assign Hirelings
+              </button>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{!-- Defenders --}}
+        {{#if defender_max}}
+          <div class="occupant-section">
+            <h4 class="section-header">Assigned Defenders ({{defender_count}}/{{defender_max}})</h4>
+            <div class="occupant-list">
+              {{#if hasDefenders}}
+                {{#each defenders}}
+                  <div class="occupant-entry">
+                    <img src="{{this.img}}" class="occupant-avatar occupant-control" alt="{{this.name}}" title="Open {{this.name}}'s Sheet" data-uuid="{{this.uuid}}">
+                    <span class="occupant-name">{{this.name}}</span>
+                    <a class="occupant-remove" title="Remove {{this.name}}" data-uuid="{{this.uuid}}" data-type="defenders"><i class="fas fa-times"></i></a>
+                  </div>
+                {{/each}}
+              {{/if}}
+
+              {{#if defender_available}}
+                {{#times defender_available}}
+                  <div class="occupant-entry empty assign-defender" title="Assign Defender">
+                    <div class="occupant-placeholder">
+                      <i class="fas fa-plus"></i>
+                    </div>
+                  </div>
+                {{/times}}
+              {{/if}}
+            </div>
+
+            {{#if defender_available}}
+              <button type="button" class="assign-defender assign-control">
+                <i class="fas fa-shield-alt"></i> Assign Defenders
+              </button>
+            {{/if}}
+          </div>
+        {{/if}}
+
+      {{else}}
+        <p class="no-facility-selected">
+          Select a facility from the list on the left to view its details, or add a new one.
+        </p>
+      {{/if}}
+    </section>
+
+  </div>
+</form>

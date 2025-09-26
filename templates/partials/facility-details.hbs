@@ -1,0 +1,25 @@
+{{!-- Details template for a facility --}}
+<div class="facility-details">
+  <h3 class="facility-name">{{name}}</h3>
+  <div class="facility-stats">
+    <div class="facility-type">{{type.value}} Facility</div>
+    <div class="facility-prerequisite"><strong>Prerequisite:</strong> {{prerequisite.value}}</div>
+    <div class="facility-space"><strong>Space:</strong> {{space.value}}</div>
+    <div class="facility-hirelings"><strong>Max Hirelings:</strong> {{hirelings.max}}</div>
+    {{#if defenders.max}}
+      <div class="facility-defenders"><strong>Max Defenders:</strong> {{defenders.max}}</div>
+    {{/if}}
+    <div class="facility-order"><strong>Order:</strong> {{order.type}}</div>
+  </div>
+  
+  <div class="facility-description">
+    {{{description.value}}}
+  </div>
+  
+  {{#if order.details}}
+    <div class="facility-order-details">
+      <h4>Current Order</h4>
+      <div class="order-text">{{order.details}}</div>
+    </div>
+  {{/if}}
+</div>

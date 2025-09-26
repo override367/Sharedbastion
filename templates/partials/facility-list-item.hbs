@@ -1,0 +1,13 @@
+{{!-- One <li> in the left rail - used for facility listing --}}
+{{#if facility.empty}}
+<li class="empty-facility"
+    data-type="{{facility.type}}" data-slot="{{facility.slot}}">
+  <i class="fas fa-plus-circle"></i> Free Facility
+</li>
+{{else}}
+<li class="facility {{#if (eq selected.id facility.id)}}selected{{/if}}"
+    data-facility-id="{{facility.id}}">
+  <img src="{{facility.img}}" class="facility-thumb" alt="{{facility.name}}">
+  <span class="facility-label">{{facility.name}}</span>
+</li>
+{{/if}}
