@@ -237,11 +237,21 @@ r("capitalize", s =>
    */
   activateListeners(html) {
     super.activateListeners(html);
-	
-	html.find(".order-edit")
+
+    const makeKeyClickable = (selector) => {
+      html.find(selector).on("keydown", ev => {
+        if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") {
+          ev.preventDefault();
+          ev.currentTarget.click();
+        }
+      });
+    };
+
+        html.find(".order-edit")
     .on("click", this._onOrderEdit.bind(this));
     // Facility Selection
     html.find(".facility-list .facility").on('click', this._onSelectFacility.bind(this));
+    makeKeyClickable(".facility-list .facility");
 
     // Open Character Sheet Button
     html.find(".open-character-sheet").on('click', async ev => {
@@ -305,19 +315,25 @@ r("capitalize", s =>
 
     // Change Bastion Image
     html.find(".bastion-portrait").on('click', this._onChangeBastionImage.bind(this));
+    makeKeyClickable(".bastion-portrait");
 
     // Add Facility Buttons
     html.find(".add-facility").on('click', this._onAddFacility.bind(this));
+    makeKeyClickable(".add-facility");
 
     // Open Occupant Sheet
     html.find(".occupant-avatar").on('click', this._onOpenOccupantSheet.bind(this));
+    makeKeyClickable(".occupant-avatar");
 
     // Assign Occupant Buttons (both placeholders and dedicated buttons)
     html.find(".assign-hireling").on('click', ev => this._onAssignOccupant(ev, this.OCCUPANT_TYPES.HIRELING));
     html.find(".assign-defender").on('click', ev => this._onAssignOccupant(ev, this.OCCUPANT_TYPES.DEFENDER));
+    makeKeyClickable(".assign-hireling");
+    makeKeyClickable(".assign-defender");
 
     // Remove Occupant Button
     html.find(".occupant-remove").on('click', this._onRemoveOccupant.bind(this));
+    makeKeyClickable(".occupant-remove");
 
     // --- Optional: Style adjustments via JS if needed ---
     // Prevent accidental text selection on facility labels
