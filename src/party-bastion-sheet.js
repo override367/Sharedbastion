@@ -435,12 +435,13 @@ r("capitalize", s =>
         const label = foundry.utils.getProperty(raw, "progress.label.value")
           ?? raw.progress?.label;
         if (label) {
-        progress = {
-          current: done ?? 0,
-          max: progressMax ?? null,
-          percent: null,
-          label
-        };
+          progress = {
+            current: done ?? 0,
+            max: progressMax ?? null,
+            percent: null,
+            label
+          };
+        }
       }
 
       results.push({
