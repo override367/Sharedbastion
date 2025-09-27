@@ -244,13 +244,91 @@ r("capitalize", s =>
    * @returns {number|null}
    */
   _extractNumber(paths, source) {
+    const tryCast = (input) => {
+      if (input === undefined || input === null) return null;
+      if (typeof input === "number") return Number.isNaN(input) ? null : input;
+      if (typeof input === "object") {
+        const candidates = ["value", "current", "max", "total"]; // common field keys
+        for (const key of candidates) {
+          if (Object.prototype.hasOwnProperty.call(input, key) || input[key] !== undefined) {
+            const nested = tryCast(input[key]);
+            if (nested !== null) return nested;
+          }
+        }
+        return null;
+      }
+      const num = Number(input);
+      return Number.isNaN(num) ? null : num;
+    };
+
     for (const path of paths) {
       const value = foundry.utils.getProperty(source, path.join("."));
-      if (value === undefined || value === null) continue;
-      const num = Number(value);
-      if (!Number.isNaN(num)) return num;
+      const numeric = tryCast(value);
+      if (numeric !== null) return numeric;
     }
     return null;
+  }
+
+  /**
+   * Normalize the various activity container formats exposed by dnd5e.
+   * @param {unknown} root
+   * @returns {Array<[string, any]>}
+   */
+  _collectActivityEntries(root) {
+    if (!root) return [];
+
+    const entries = [];
+    const push = (key, value) => {
+      if (!value) return;
+      const id = key ?? value?.id ?? value?.slug ?? value?.key;
+      entries.push([String(id ?? entries.length), value]);
+    };
+
+    const asArray = (value) => {
+      if (!value) return;
+      for (let i = 0; i < value.length; i++) {
+        push(value[i]?.id ?? value[i]?.slug ?? i, value[i]);
+      }
+    };
+
+    if (Array.isArray(root)) {
+      asArray(root);
+      return entries;
+    }
+
+    if (typeof root.entries === "function") {
+      try {
+        for (const [key, value] of root.entries()) {
+          push(key, value);
+        }
+        if (entries.length) return entries;
+      } catch (err) {
+        console.warn("Shared Bastion | Failed to iterate activity entries via entries():", err);
+      }
+    }
+
+    const contents = root.contents ?? root._contents ?? root.values ?? null;
+    if (Array.isArray(contents)) {
+      asArray(contents);
+      if (entries.length) return entries;
+    }
+
+    if (typeof root.toObject === "function") {
+      try {
+        const plain = root.toObject();
+        if (plain && plain !== root) {
+          return this._collectActivityEntries(plain);
+        }
+      } catch (err) {
+        console.debug("Shared Bastion | Unable to convert activity data model to object:", err);
+      }
+    }
+
+    if (typeof root === "object") {
+      for (const [key, value] of Object.entries(root)) push(key, value);
+    }
+
+    return entries;
   }
 
   /**
@@ -260,12 +338,12 @@ r("capitalize", s =>
    */
   async _prepareFacilityActivities(facility) {
     const activitiesRoot = foundry.utils.getProperty(facility, "system.activities");
-    if (!activitiesRoot || typeof activitiesRoot !== "object") {
+    if (!activitiesRoot || (typeof activitiesRoot !== "object" && !Array.isArray(activitiesRoot))) {
       return { activities: [], activeActivity: null };
     }
 
     const results = [];
-    for (const [activityId, raw] of Object.entries(activitiesRoot)) {
+    for (const [activityId, raw] of this._collectActivityEntries(activitiesRoot)) {
       if (!raw) continue;
 
       const type = raw.type ?? raw.activityType ?? "";
@@ -273,22 +351,40 @@ r("capitalize", s =>
       const typeLabel = typeKey && game.i18n.has(typeKey)
         ? game.i18n.localize(typeKey)
         : (type ? foundry.utils.capitalize(type) : game.i18n.localize("shared-bastion.ui.activityNameFallback"));
-      const name = raw.name ?? raw.label ?? typeLabel;
-      const disabled = raw.disabled === true || raw.enabled === false || raw.active === false;
-      const summary = raw.summary
+      const name = foundry.utils.getProperty(raw, "name.value")
+        ?? raw.name
+        ?? foundry.utils.getProperty(raw, "label.value")
+        ?? raw.label
+        ?? typeLabel;
+      const disabledValue = foundry.utils.getProperty(raw, "disabled")
+        ?? foundry.utils.getProperty(raw, "disabled.value");
+      const enabledValue = foundry.utils.getProperty(raw, "enabled")
+        ?? foundry.utils.getProperty(raw, "enabled.value");
+      const activeValue = foundry.utils.getProperty(raw, "active")
+        ?? foundry.utils.getProperty(raw, "active.value");
+      const disabled = disabledValue === true || enabledValue === false || activeValue === false;
+      const summary = foundry.utils.getProperty(raw, "summary.value")
+        ?? raw.summary
         ?? foundry.utils.getProperty(raw, "config.summary")
         ?? "";
-      const targetName = foundry.utils.getProperty(raw, "config.crafting.item.name")
+      const targetName = foundry.utils.getProperty(raw, "config.crafting.item.name.value")
+        ?? foundry.utils.getProperty(raw, "config.crafting.item.name")
+        ?? foundry.utils.getProperty(raw, "config.item.name.value")
         ?? foundry.utils.getProperty(raw, "config.item.name")
+        ?? foundry.utils.getProperty(raw, "item.name.value")
         ?? foundry.utils.getProperty(raw, "item.name")
+        ?? foundry.utils.getProperty(raw, "target.name.value")
         ?? foundry.utils.getProperty(raw, "target.name")
         ?? "";
-      const icon = raw.img
+      const icon = foundry.utils.getProperty(raw, "img.value")
+        ?? raw.img
         ?? foundry.utils.getProperty(raw, "config.crafting.item.img")
         ?? foundry.utils.getProperty(raw, "config.item.img")
         ?? facility.img;
 
-      const descriptionRaw = raw.description?.value ?? raw.description ?? "";
+      const descriptionRaw = foundry.utils.getProperty(raw, "description.value")
+        ?? raw.description
+        ?? "";
       let enrichedDescription = "";
       if (descriptionRaw) {
         try {
@@ -323,7 +419,8 @@ r("capitalize", s =>
       const done = progressMax ? Math.min(Math.max(progressCurrent ?? 0, 0), progressMax) : (progressCurrent ?? null);
       if (progressMax && progressMax > 0) {
         const pct = Math.min(Math.max(((done ?? 0) / progressMax) * 100, 0), 100);
-        const label = raw.progress?.label
+        const label = foundry.utils.getProperty(raw, "progress.label.value")
+          ?? raw.progress?.label
           ?? game.i18n.format("shared-bastion.ui.turnProgress", {
             done: Math.round(done ?? 0),
             total: Math.round(progressMax)
@@ -334,12 +431,15 @@ r("capitalize", s =>
           percent: pct,
           label
         };
-      } else if (raw.progress?.label) {
+      } else {
+        const label = foundry.utils.getProperty(raw, "progress.label.value")
+          ?? raw.progress?.label;
+        if (label) {
         progress = {
           current: done ?? 0,
           max: progressMax ?? null,
           percent: null,
-          label: raw.progress.label
+          label
         };
       }
 
@@ -1052,20 +1152,44 @@ async _onOrderEdit(ev) {
       "a[data-uuid]"
     ].join(", ");
 
-    target.on("click.sbContentLinks", docLinkSelectors, ev => {
-      if (TextEditor?._onClickContentLink) {
-        return TextEditor._onClickContentLink.call(TextEditor, ev);
+    target.on("click.sbContentLinks", docLinkSelectors, async ev => {
+      const handlers = [
+        TextEditor?._onClickContentLink,
+        TextEditor?.onClickDocumentLink,
+        TextEditor?._onClickDocumentLink,
+        TextEditor?._onClickEntityLink
+      ].filter(fn => typeof fn === "function");
+
+      for (const fn of handlers) {
+        try {
+          const result = await fn.call(TextEditor, ev);
+          if (result !== undefined) return result;
+        } catch (err) {
+          console.warn("Shared Bastion | TextEditor handler failed to open link:", err);
+        }
       }
-      if (TextEditor?.onClickDocumentLink) {
-        return TextEditor.onClickDocumentLink.call(TextEditor, ev);
+
+      ev.preventDefault();
+      const link = ev.currentTarget;
+      if (!(link instanceof HTMLElement)) return false;
+
+      const uuid = link.dataset?.uuid
+        ?? link.dataset?.documentUuid
+        ?? link.dataset?.entityUuid
+        ?? link.getAttribute?.("href");
+      if (!uuid) return false;
+
+      try {
+        const doc = await fromUuid(uuid);
+        if (doc?.sheet) {
+          doc.sheet.render(true, { focus: true });
+        } else if (doc?.view) {
+          doc.view();
+        }
+      } catch (err) {
+        console.warn(`Shared Bastion | Failed to open linked document (${uuid}):`, err);
       }
-      if (TextEditor?._onClickDocumentLink) {
-        return TextEditor._onClickDocumentLink.call(TextEditor, ev);
-      }
-      if (TextEditor?._onClickEntityLink) {
-        return TextEditor._onClickEntityLink.call(TextEditor, ev);
-      }
-      return true;
+      return false;
     });
   }
 
