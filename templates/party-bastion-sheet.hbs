@@ -1,200 +1,338 @@
 <form class="{{cssClass}} party-bastion" autocomplete="off">
-  {{!-- Header Section --}}
-  <header class="header-banner">
-    <div style="display:flex; align-items:center;">
-      <img src="{{actor.img}}" class="bastion-portrait" title="Click to change image">
-      <h1>{{actor.name}}</h1>
+  <header class="header-banner" role="banner">
+    <div class="header-identity">
+      <img
+        src="{{actor.img}}"
+        class="bastion-portrait"
+        alt="{{localize 'shared-bastion.ui.bastionPortraitAlt' name=actor.name}}"
+        role="button"
+        tabindex="0"
+        aria-label="{{localize 'shared-bastion.ui.changeBastionPortrait'}}"
+      >
+      <div class="header-text">
+        <h1 class="bastion-name">{{actor.name}}</h1>
+        <span class="header-subtitle">{{localize 'shared-bastion.ui.openBastion'}}</span>
+      </div>
     </div>
     <div class="header-actions">
-      <button type="button" class="open-character-sheet">
-        <i class="fas fa-user"></i> Character Sheet
+      <button type="button" class="open-character-sheet" aria-label="{{localize 'shared-bastion.ui.openSheet'}}">
+        <i class="fas fa-user" aria-hidden="true"></i>
+        <span>{{localize 'shared-bastion.ui.openSheet'}}</span>
       </button>
     </div>
   </header>
 
-  {{!-- Main Body --}}
   <div class="sheet-body">
-
-    {{!-- Left Rail: Facility List --}}
-    <aside class="left-rail">
-      <h2 class="section-header">Basic Facilities</h2>
-      <ul class="facility-list">
+    <aside class="left-rail" aria-label="{{localize 'shared-bastion.ui.facilityList'}}">
+      <h2 class="section-header">{{localize 'shared-bastion.ui.basicFacilities'}}</h2>
+      <ul class="facility-list" role="list">
         {{#each basicFacilities}}
-          <li class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}" data-facility-id="{{this.id}}">
-            <img src="{{this.img}}" class="facility-thumb" alt="{{this.name}}">
-            <span class="facility-label">{{this.name}}</span>
+          <li
+            class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}"
+            data-facility-id="{{this.id}}"
+            role="button"
+            tabindex="0"
+            aria-pressed="{{#if (eq ../selectedFacility.id this.id)}}true{{else}}false{{/if}}"
+            aria-label="{{localize 'shared-bastion.ui.viewFacility' name=this.name}}"
+          >
+            <div class="facility-card">
+              <div class="facility-thumb-frame" aria-hidden="true">
+                <img src="{{this.img}}" class="facility-thumb" alt="">
+              </div>
+              <div class="facility-card__body">
+                <span class="facility-label" title="{{this.name}}">{{this.name}}</span>
+                <span class="facility-card__meta">
+                  {{#if this.system.level}}
+                    {{localize 'shared-bastion.ui.facilityLevelCategory'
+                      level=this.system.level
+                      category=(default this.system.category (capitalize (default this.system.type.value 'facility')))
+                    }}
+                  {{else if this.system.category}}
+                    {{localize 'shared-bastion.ui.facilityCategory' category=this.system.category}}
+                  {{else if this.system.type.value}}
+                    {{capitalize this.system.type.value}}
+                  {{else}}
+                    {{localize 'shared-bastion.ui.basicFacilityLabel'}}
+                  {{/if}}
+                </span>
+              </div>
+              <i class="fas fa-chevron-right facility-card__chevron" aria-hidden="true"></i>
+            </div>
           </li>
         {{/each}}
-        <li class="add-facility empty-facility" data-type="basic" title="Add Basic Facility">
-          <i class="fas fa-plus"></i> Add Facility
+        <li
+          class="add-facility empty-facility"
+          data-type="basic"
+          title="{{localize 'shared-bastion.ui.addFacility'}}"
+          role="button"
+          tabindex="0"
+          aria-label="{{localize 'shared-bastion.ui.addFacility'}}"
+        >
+          <i class="fas fa-plus" aria-hidden="true"></i>
+          <span>{{localize 'shared-bastion.ui.freeFacilitySlot'}}</span>
         </li>
       </ul>
 
-      <h2 class="section-header">Special Facilities</h2>
-      <ul class="facility-list">
+      <h2 class="section-header">{{localize 'shared-bastion.ui.specialFacilities'}}</h2>
+      <ul class="facility-list" role="list">
         {{#each specialFacilities}}
-           <li class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}" data-facility-id="{{this.id}}">
-            <img src="{{this.img}}" class="facility-thumb" alt="{{this.name}}">
-            <span class="facility-label">{{this.name}}</span>
+          <li
+            class="facility {{#if (eq ../selectedFacility.id this.id)}}selected{{/if}}"
+            data-facility-id="{{this.id}}"
+            role="button"
+            tabindex="0"
+            aria-pressed="{{#if (eq ../selectedFacility.id this.id)}}true{{else}}false{{/if}}"
+            aria-label="{{localize 'shared-bastion.ui.viewFacility' name=this.name}}"
+          >
+            <div class="facility-card">
+              <div class="facility-thumb-frame" aria-hidden="true">
+                <img src="{{this.img}}" class="facility-thumb" alt="">
+              </div>
+              <div class="facility-card__body">
+                <span class="facility-label" title="{{this.name}}">{{this.name}}</span>
+                <span class="facility-card__meta">
+                  {{#if this.system.level}}
+                    {{localize 'shared-bastion.ui.facilityLevelCategory'
+                      level=this.system.level
+                      category=(default this.system.category (capitalize (default this.system.type.value 'facility')))
+                    }}
+                  {{else if this.system.category}}
+                    {{localize 'shared-bastion.ui.facilityCategory' category=this.system.category}}
+                  {{else if this.system.type.value}}
+                    {{capitalize this.system.type.value}}
+                  {{else}}
+                    {{localize 'shared-bastion.ui.specialFacilityLabel'}}
+                  {{/if}}
+                </span>
+              </div>
+              <i class="fas fa-chevron-right facility-card__chevron" aria-hidden="true"></i>
+            </div>
           </li>
         {{/each}}
-        <li class="add-facility empty-facility" data-type="special" title="Add Special Facility">
-          <i class="fas fa-plus"></i> Add Facility
+        <li
+          class="add-facility empty-facility"
+          data-type="special"
+          title="{{localize 'shared-bastion.ui.addFacility'}}"
+          role="button"
+          tabindex="0"
+          aria-label="{{localize 'shared-bastion.ui.addFacility'}}"
+        >
+          <i class="fas fa-plus" aria-hidden="true"></i>
+          <span>{{localize 'shared-bastion.ui.freeFacilitySlot'}}</span>
         </li>
       </ul>
     </aside>
 
-    {{!-- Right Pane: Facility Details --}}
     <section class="right-pane">
       {{#if selectedFacility}}
-        <img src="{{selectedFacility.img}}" class="facility-art" alt="{{selectedFacility.name}} Art">
-        <h3 class="facility-title">{{selectedFacility.name}}</h3>
+        <article class="facility-details" aria-live="polite">
+          <header class="facility-summary">
+            <div class="facility-summary__media">
+              <img
+                src="{{selectedFacility.img}}"
+                class="facility-art"
+                alt="{{localize 'shared-bastion.ui.facilityImageAlt' name=selectedFacility.name}}"
+              >
+            </div>
+            <div class="facility-summary__body">
+              <h2 class="facility-title">{{selectedFacility.name}}</h2>
+              <dl class="facility-stats">
+                {{#if selectedFacility.system.level}}
+                  <div class="stat-row">
+                    <dt>{{localize 'shared-bastion.ui.level'}}</dt>
+                    <dd>{{selectedFacility.system.level}}</dd>
+                  </div>
+                {{/if}}
+                {{#if selectedFacility.system.category}}
+                  <div class="stat-row">
+                    <dt>{{localize 'shared-bastion.ui.category'}}</dt>
+                    <dd>{{selectedFacility.system.category}}</dd>
+                  </div>
+                {{/if}}
+                {{#if selectedFacility.system.prerequisite.value}}
+                  <div class="stat-row">
+                    <dt>{{localize 'shared-bastion.ui.prerequisite'}}</dt>
+                    <dd>{{selectedFacility.system.prerequisite.value}}</dd>
+                  </div>
+                {{/if}}
+                {{#if selectedFacility.system.space.value}}
+                  <div class="stat-row">
+                    <dt>{{localize 'shared-bastion.ui.space'}}</dt>
+                    <dd>{{selectedFacility.system.space.value}}</dd>
+                  </div>
+                {{/if}}
+                <div class="stat-row">
+                  <dt>{{localize 'shared-bastion.ui.maxHirelings'}}</dt>
+                  <dd>{{hireling_max}}</dd>
+                </div>
+                <div class="stat-row">
+                  <dt>{{localize 'shared-bastion.ui.maxDefenders'}}</dt>
+                  <dd>{{defender_max}}</dd>
+                </div>
+              </dl>
+            </div>
+          </header>
 
-        <div class="facility-stats">
-          {{#if selectedFacility.system.level}}
-             <div><strong>Level {{selectedFacility.system.level}}</strong> {{selectedFacility.system.category}} Facility</div>
-          {{else if selectedFacility.system.category}}
-             <div><strong>Category:</strong> {{selectedFacility.system.category}}</div>
-          {{/if}}
-
-          {{#if selectedFacility.system.prerequisite.value}}
-            <div><strong>Prerequisite:</strong> {{selectedFacility.system.prerequisite.value}}</div>
-          {{/if}}
-
-          {{#if selectedFacility.system.space.value}}
-            <div><strong>Space:</strong> {{selectedFacility.system.space.value}}</div>
-          {{/if}}
-
-          <div><strong>Max Hirelings:</strong> {{hireling_max}}</div>
-          <div><strong>Max Defenders:</strong> {{defender_max}}</div>
-
-          {{!-- =====  ORDER + PROGRESS  ===== --}}
           {{#if selectedFacility.system.order}}
             {{#let selectedFacility.system.order as |order|}}
               {{#if (and order.type (notEq order.type "none"))}}
-		<div class="facility-order-progress">
-		  <div class="order-label">
-			{{!-- icon (only if item & img both exist) --}}
-			{{#if order.item}}
-			  {{#if order.item.img}}
-				<img src="{{order.item.img}}" class="order-icon">
-			  {{/if}}
-			{{/if}}
+                <section class="facility-order-progress">
+                  <div class="order-head">
+                    <div class="order-label">
+                      {{#if order.item}}
+                        {{#if order.item.img}}
+                          <img src="{{order.item.img}}" class="order-icon" alt="">
+                        {{/if}}
+                      {{/if}}
+                      <span class="order-type">{{capitalize order.type}}</span>
+                      {{#if order.item}}
+                        {{#if order.item.name}}
+                          <span class="order-item">&mdash; {{order.item.name}}</span>
+                        {{/if}}
+                      {{/if}}
+                    </div>
+                    <button
+                      type="button"
+                      class="order-edit"
+                      data-facility-id="{{selectedFacility.id}}"
+                      title="{{localize 'shared-bastion.ui.editOrder'}}"
+                      aria-label="{{localize 'shared-bastion.ui.editOrder'}}"
+                    >
+                      <i class="fas fa-edit" aria-hidden="true"></i>
+                    </button>
+                  </div>
 
-			{{capitalize order.type}}
-
-			{{!-- item name after a dash --}}
-			{{#if order.item}}
-			  {{#if order.item.name}} – {{order.item.name}}{{/if}}
-			{{/if}}
-		  </div>
-
-		  <button type="button"
-				  class="order-edit"
-				  data-facility-id="{{selectedFacility.id}}"
-				  title="Edit Order (opens Tidy5e dialog)">
-			<i class="fas fa-edit"></i>
-		  </button>
-		</div>
-
-
-                {{#if order.turnsTotal}}
-                  {{#let order.turnsTotal as |tot|}}
-                    {{#let order.turnsRemaining as |rem|}}
-                      {{#let (subtract tot rem) as |done|}}
-                        {{#let (divide (multiply done 100) tot) as |pct|}}
-                          <div class="progress-outer">
-                            <div class="progress-inner" style="width: {{pct}}%;"></div>
-                          </div>
-                          <div class="progress-text">{{done}} / {{tot}} turns</div>
+                  {{#if order.turnsTotal}}
+                    {{#let order.turnsTotal as |tot|}}
+                      {{#let order.turnsRemaining as |rem|}}
+                        {{#let (subtract tot rem) as |done|}}
+                          {{#let (divide (multiply done 100) tot) as |pct|}}
+                            <div class="progress-outer" role="progressbar" aria-valuemin="0" aria-valuemax="{{tot}}" aria-valuenow="{{done}}" aria-valuetext="{{localize 'shared-bastion.ui.turnProgress' done=done total=tot}}">
+                              <div class="progress-inner" style="width: {{pct}}%;"></div>
+                            </div>
+                            <div class="progress-text">{{localize 'shared-bastion.ui.turnProgress' done=done total=tot}}</div>
+                          {{/let}}
                         {{/let}}
                       {{/let}}
                     {{/let}}
-                  {{/let}}
-                {{/if}}
+                  {{/if}}
+                </section>
               {{/if}}
             {{/let}}
           {{/if}}
-        </div>
 
-        <div class="facility-description">
-          {{{enrichedDescription}}}
-        </div>
+          <section class="facility-description">
+            <h3 class="facility-subheader">{{localize 'shared-bastion.ui.description'}}</h3>
+            <div class="facility-description__body">
+              {{{enrichedDescription}}}
+            </div>
+          </section>
 
-        {{!-- Hirelings --}}
-        {{#if hireling_max}}
-          <div class="occupant-section">
-            <h4 class="section-header">Assigned Hirelings ({{hireling_count}}/{{hireling_max}})</h4>
-            <div class="occupant-list">
-              {{#if hasHirelings}}
-                {{#each hirelings}}
-                  <div class="occupant-entry">
-                    <img src="{{this.img}}" class="occupant-avatar occupant-control" alt="{{this.name}}" title="Open {{this.name}}'s Sheet" data-uuid="{{this.uuid}}">
-                    <span class="occupant-name">{{this.name}}</span>
-                    <a class="occupant-remove" title="Remove {{this.name}}" data-uuid="{{this.uuid}}" data-type="hirelings"><i class="fas fa-times"></i></a>
-                  </div>
-                {{/each}}
-              {{/if}}
+          {{#if hireling_max}}
+            <section class="occupant-section">
+              <h3 class="section-header">{{localize 'shared-bastion.ui.assignedHirelingsCount' count=hireling_count max=hireling_max}}</h3>
+              <div class="occupant-grid">
+                {{#if hasHirelings}}
+                  {{#each hirelings}}
+                    <div class="occupant-entry">
+                      <img
+                        src="{{this.img}}"
+                        class="occupant-avatar occupant-control"
+                        alt="{{this.name}}"
+                        title="{{localize 'shared-bastion.ui.openOccupantSheet' name=this.name}}"
+                        data-uuid="{{this.uuid}}"
+                        role="button"
+                        tabindex="0"
+                      >
+                      <span class="occupant-name" title="{{this.name}}">{{this.name}}</span>
+                      <button
+                        type="button"
+                        class="occupant-remove"
+                        title="{{localize 'shared-bastion.ui.removeOccupant' name=this.name}}"
+                        aria-label="{{localize 'shared-bastion.ui.removeOccupant' name=this.name}}"
+                        data-uuid="{{this.uuid}}"
+                        data-type="hirelings"
+                      >
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  {{/each}}
+                {{/if}}
+
+                {{#if hireling_available}}
+                  {{#times hireling_available}}
+                    <div class="occupant-entry empty assign-hireling" title="{{localize 'shared-bastion.ui.assignHirelingSlot'}}" aria-label="{{localize 'shared-bastion.ui.assignHirelingSlot'}}" role="button" tabindex="0">
+                      <div class="occupant-placeholder">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                      </div>
+                    </div>
+                  {{/times}}
+                {{/if}}
+              </div>
 
               {{#if hireling_available}}
-                {{#times hireling_available}}
-                  <div class="occupant-entry empty assign-hireling" title="Assign Hireling">
-                    <div class="occupant-placeholder">
-                      <i class="fas fa-plus"></i>
+                <button type="button" class="assign-hireling assign-control">
+                  <i class="fas fa-user-plus" aria-hidden="true"></i>
+                  <span>{{localize 'shared-bastion.ui.assignHirelings'}}</span>
+                </button>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{#if defender_max}}
+            <section class="occupant-section">
+              <h3 class="section-header">{{localize 'shared-bastion.ui.assignedDefendersCount' count=defender_count max=defender_max}}</h3>
+              <div class="occupant-grid">
+                {{#if hasDefenders}}
+                  {{#each defenders}}
+                    <div class="occupant-entry">
+                      <img
+                        src="{{this.img}}"
+                        class="occupant-avatar occupant-control"
+                        alt="{{this.name}}"
+                        title="{{localize 'shared-bastion.ui.openOccupantSheet' name=this.name}}"
+                        data-uuid="{{this.uuid}}"
+                        role="button"
+                        tabindex="0"
+                      >
+                      <span class="occupant-name" title="{{this.name}}">{{this.name}}</span>
+                      <button
+                        type="button"
+                        class="occupant-remove"
+                        title="{{localize 'shared-bastion.ui.removeOccupant' name=this.name}}"
+                        aria-label="{{localize 'shared-bastion.ui.removeOccupant' name=this.name}}"
+                        data-uuid="{{this.uuid}}"
+                        data-type="defenders"
+                      >
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                      </button>
                     </div>
-                  </div>
-                {{/times}}
-              {{/if}}
-            </div>
+                  {{/each}}
+                {{/if}}
 
-            {{#if hireling_available}}
-              <button type="button" class="assign-hireling assign-control">
-                <i class="fas fa-user-plus"></i> Assign Hirelings
-              </button>
-            {{/if}}
-          </div>
-        {{/if}}
-
-        {{!-- Defenders --}}
-        {{#if defender_max}}
-          <div class="occupant-section">
-            <h4 class="section-header">Assigned Defenders ({{defender_count}}/{{defender_max}})</h4>
-            <div class="occupant-list">
-              {{#if hasDefenders}}
-                {{#each defenders}}
-                  <div class="occupant-entry">
-                    <img src="{{this.img}}" class="occupant-avatar occupant-control" alt="{{this.name}}" title="Open {{this.name}}'s Sheet" data-uuid="{{this.uuid}}">
-                    <span class="occupant-name">{{this.name}}</span>
-                    <a class="occupant-remove" title="Remove {{this.name}}" data-uuid="{{this.uuid}}" data-type="defenders"><i class="fas fa-times"></i></a>
-                  </div>
-                {{/each}}
-              {{/if}}
+                {{#if defender_available}}
+                  {{#times defender_available}}
+                    <div class="occupant-entry empty assign-defender" title="{{localize 'shared-bastion.ui.assignDefenderSlot'}}" aria-label="{{localize 'shared-bastion.ui.assignDefenderSlot'}}" role="button" tabindex="0">
+                      <div class="occupant-placeholder">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                      </div>
+                    </div>
+                  {{/times}}
+                {{/if}}
+              </div>
 
               {{#if defender_available}}
-                {{#times defender_available}}
-                  <div class="occupant-entry empty assign-defender" title="Assign Defender">
-                    <div class="occupant-placeholder">
-                      <i class="fas fa-plus"></i>
-                    </div>
-                  </div>
-                {{/times}}
+                <button type="button" class="assign-defender assign-control">
+                  <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                  <span>{{localize 'shared-bastion.ui.assignDefenders'}}</span>
+                </button>
               {{/if}}
-            </div>
-
-            {{#if defender_available}}
-              <button type="button" class="assign-defender assign-control">
-                <i class="fas fa-shield-alt"></i> Assign Defenders
-              </button>
-            {{/if}}
-          </div>
-        {{/if}}
-
+            </section>
+          {{/if}}
+        </article>
       {{else}}
-        <p class="no-facility-selected">
-          Select a facility from the list on the left to view its details, or add a new one.
-        </p>
+        <p class="no-facility-selected">{{localize 'shared-bastion.ui.noFacilitySelected'}}</p>
       {{/if}}
     </section>
-
   </div>
 </form>

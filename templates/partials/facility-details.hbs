@@ -1,25 +1,66 @@
-{{!-- Details template for a facility --}}
 <div class="facility-details">
-  <h3 class="facility-name">{{name}}</h3>
-  <div class="facility-stats">
-    <div class="facility-type">{{type.value}} Facility</div>
-    <div class="facility-prerequisite"><strong>Prerequisite:</strong> {{prerequisite.value}}</div>
-    <div class="facility-space"><strong>Space:</strong> {{space.value}}</div>
-    <div class="facility-hirelings"><strong>Max Hirelings:</strong> {{hirelings.max}}</div>
-    {{#if defenders.max}}
-      <div class="facility-defenders"><strong>Max Defenders:</strong> {{defenders.max}}</div>
-    {{/if}}
-    <div class="facility-order"><strong>Order:</strong> {{order.type}}</div>
-  </div>
-  
-  <div class="facility-description">
-    {{{description.value}}}
-  </div>
-  
-  {{#if order.details}}
-    <div class="facility-order-details">
-      <h4>Current Order</h4>
-      <div class="order-text">{{order.details}}</div>
+  <header class="facility-summary">
+    <div class="facility-summary__media">
+      <img src="{{img}}" class="facility-art" alt="{{localize 'shared-bastion.ui.facilityImageAlt' name=name}}">
     </div>
+    <div class="facility-summary__body">
+      <h2 class="facility-title">{{name}}</h2>
+      <dl class="facility-stats">
+        {{#if system.level}}
+          <div class="stat-row">
+            <dt>{{localize 'shared-bastion.ui.level'}}</dt>
+            <dd>{{system.level}}</dd>
+          </div>
+        {{/if}}
+        {{#if system.category}}
+          <div class="stat-row">
+            <dt>{{localize 'shared-bastion.ui.category'}}</dt>
+            <dd>{{system.category}}</dd>
+          </div>
+        {{/if}}
+        {{#if system.prerequisite.value}}
+          <div class="stat-row">
+            <dt>{{localize 'shared-bastion.ui.prerequisite'}}</dt>
+            <dd>{{system.prerequisite.value}}</dd>
+          </div>
+        {{/if}}
+        {{#if system.space.value}}
+          <div class="stat-row">
+            <dt>{{localize 'shared-bastion.ui.space'}}</dt>
+            <dd>{{system.space.value}}</dd>
+          </div>
+        {{/if}}
+        <div class="stat-row">
+          <dt>{{localize 'shared-bastion.ui.maxHirelings'}}</dt>
+          <dd>{{default system.hirelings.max 0}}</dd>
+        </div>
+        {{#if system.defenders.max}}
+          <div class="stat-row">
+            <dt>{{localize 'shared-bastion.ui.maxDefenders'}}</dt>
+            <dd>{{system.defenders.max}}</dd>
+          </div>
+        {{/if}}
+      </dl>
+    </div>
+  </header>
+
+  <section class="facility-description">
+    <h3 class="facility-subheader">{{localize 'shared-bastion.ui.description'}}</h3>
+    <div class="facility-description__body">
+      {{{system.description.value}}}
+    </div>
+  </section>
+
+  {{#if system.order.type}}
+    <section class="facility-order-progress">
+      <div class="order-head">
+        <div class="order-label">
+          {{localize 'shared-bastion.ui.currentOrder'}}
+        </div>
+      </div>
+      {{#if system.order.details}}
+        <p class="order-details">{{system.order.details}}</p>
+      {{/if}}
+    </section>
   {{/if}}
 </div>
