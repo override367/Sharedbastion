@@ -21,6 +21,15 @@ const escapeHTML = (value) => {
   return str.replace(/[&<>"'`]/g, (char) => entityMap[char] ?? char);
 };
 
+const capitalize = (value) => {
+  const str = value === undefined || value === null ? "" : String(value);
+  if (!str.length) return str;
+  const foundryUtils = globalThis.foundry?.utils ?? {};
+  if (typeof foundryUtils.capitalize === "function") return foundryUtils.capitalize(str);
+  if (typeof foundryUtils.capitalise === "function") return foundryUtils.capitalise(str);
+  return str[0].toUpperCase() + str.slice(1);
+};
+
 export class PartyBastionSheet extends Application {
   /**
    * @param {Actor} actor - The Party Bastion actor
@@ -350,7 +359,7 @@ r("capitalize", s =>
       const typeKey = type ? `dnd5e.activities.types.${type}` : null;
       const typeLabel = typeKey && game.i18n.has(typeKey)
         ? game.i18n.localize(typeKey)
-        : (type ? foundry.utils.capitalize(type) : game.i18n.localize("shared-bastion.ui.activityNameFallback"));
+        : (type ? capitalize(type) : game.i18n.localize("shared-bastion.ui.activityNameFallback"));
       const name = foundry.utils.getProperty(raw, "name.value")
         ?? raw.name
         ?? foundry.utils.getProperty(raw, "label.value")
