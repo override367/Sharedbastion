@@ -60,6 +60,7 @@
     },
     "dialogs": {
       "addBasicFacility": "Add Basic Facility",
+
       "addSpecialFacility": "Add Special Facility",
       "createFacility": "Create",
       "cancel": "Cancel",

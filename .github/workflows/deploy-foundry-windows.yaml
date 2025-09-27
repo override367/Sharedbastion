@@ -1,8 +1,7 @@
-# Create an updated deploy workflow file aimed at X:\shared-bastion exactly
+# Write a corrected YAML workflow with plain ASCII and no stray lines
 from pathlib import Path
 
-p = Path("/mnt/data/deploy-foundry-windows.yml")
-p.write_text("""name: Deploy to self-hosted (Windows) — Foundry Module
+content = """name: Deploy to self-hosted (Windows) - Foundry Module
 
 on:
   push:
@@ -15,7 +14,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, windows, shared-bastion]
     defaults:
       run:
         shell: powershell
@@ -50,6 +49,8 @@ jobs:
       - name: Done
         run: |
           Write-Host "Synced to $env:MODULE_DIR. If Foundry is open, use 'Reload Application' to see changes."
-""", encoding="utf-8")
+"""
 
+p = Path("/mnt/data/deploy-foundry-windows.yml")
+p.write_text(content, encoding="utf-8")
 str(p)
