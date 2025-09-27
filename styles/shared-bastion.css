@@ -3,21 +3,22 @@
    ===================================================== */
 
 .party-bastion {
-  --sb-surface: var(--color-bg-alt, rgba(0, 0, 0, 0.08));
-  --sb-surface-strong: rgba(255, 255, 255, 0.18);
-  --sb-surface-hover: var(--color-bg-btn-hover, rgba(0, 0, 0, 0.15));
-  --sb-surface-selected: rgba(223, 160, 69, 0.25);
-  --sb-border: var(--color-border-dark, rgba(0, 0, 0, 0.35));
-  --sb-border-strong: var(--color-border-highlight, rgba(0, 0, 0, 0.5));
+  --sb-window-bg: #1d2026;
+  --sb-surface: rgba(255, 255, 255, 0.04);
+  --sb-surface-strong: rgba(255, 255, 255, 0.12);
+  --sb-surface-hover: rgba(255, 255, 255, 0.08);
+  --sb-surface-selected: rgba(223, 160, 69, 0.3);
+  --sb-border: rgba(0, 0, 0, 0.6);
+  --sb-border-strong: rgba(255, 255, 255, 0.18);
   --sb-accent: #d7a251;
-  --sb-text-muted: var(--color-text-light-secondary, rgba(0, 0, 0, 0.65));
+  --sb-text-muted: rgba(255, 255, 255, 0.65);
   --sb-radius: 8px;
-  color: var(--color-text-light-highlight, #f5eee0);
+  color: var(--color-text-light-highlight, #f1efe7);
 }
 
 /* WINDOW BACKGROUND ---------------------------------- */
 .party-bastion .window-content {
-  background: linear-gradient(145deg, rgba(67, 44, 24, 0.85), rgba(47, 32, 20, 0.95)), url('/ui/parchment.jpg') center / cover;
+  background: linear-gradient(160deg, rgba(29, 32, 38, 0.96), rgba(14, 15, 19, 0.98));
   padding: 0;
   overflow: hidden;
 }
@@ -29,9 +30,9 @@
   justify-content: space-between;
   padding: 12px 16px;
   gap: 16px;
-  background: rgba(0, 0, 0, 0.35);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-light-highlight, #f5eee0);
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: inherit;
 }
 
 .party-bastion .header-identity {
@@ -92,7 +93,7 @@
   font: 600 12px "Roboto Condensed", sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
   color: var(--color-text-light-highlight, #fff);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
@@ -112,7 +113,7 @@
   height: calc(100% - 80px);
   display: flex;
   flex-direction: row;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--sb-surface);
 }
 
 .party-bastion .left-rail {
@@ -122,8 +123,8 @@
   overflow-y: auto;
   padding: 16px 14px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(2px);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(3px);
 }
 
 .party-bastion .right-pane {
@@ -131,7 +132,7 @@
   height: 100%;
   overflow-y: auto;
   padding: 18px 22px 24px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ============  FACILITY LIST  ============ */
@@ -172,20 +173,21 @@
   gap: 12px;
   padding: 10px;
   border-radius: var(--sb-radius);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   min-height: 76px;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.18);
 }
 
-.party-bastion .facility:hover .facility-card {
-  background: rgba(215, 162, 81, 0.15);
+.party-bastion .facility:hover .facility-card,
+.party-bastion .facility:focus-visible .facility-card {
+  background: rgba(215, 162, 81, 0.12);
 }
 
 .party-bastion .facility.selected .facility-card {
-  background: rgba(215, 162, 81, 0.25);
+  background: var(--sb-surface-selected);
   border-color: rgba(215, 162, 81, 0.9);
-  box-shadow: 0 0 0 1px rgba(215, 162, 81, 0.6), 0 8px 18px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 0 0 1px rgba(215, 162, 81, 0.6), 0 8px 18px rgba(0, 0, 0, 0.32);
 }
 
 .party-bastion .facility-thumb-frame {
@@ -431,6 +433,22 @@
   text-transform: uppercase;
   text-align: right;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.party-bastion .order-details {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.party-bastion .order-details.order-description {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.party-bastion .order-details.muted {
+  color: var(--sb-text-muted);
+  font-style: italic;
 }
 
 /* ============  OCCUPANT SECTIONS  ============ */

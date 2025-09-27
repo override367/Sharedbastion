@@ -140,6 +140,8 @@ r("capitalize", s =>
 
     data.selectedFacility = null; // Initialize
     data.enrichedDescription = ""; // Initialize
+    data.activities = [];
+    data.activeActivity = null;
 
     // Selected facility processing
     if (this.selectedFacility) {
@@ -188,9 +190,15 @@ r("capitalize", s =>
         data.hasHirelings = data.hireling_count > 0;
         data.hasDefenders = data.defender_count > 0;
 
+        const activityData = await this._prepareFacilityActivities(facility);
+        data.activities = activityData.activities;
+        data.activeActivity = activityData.activeActivity;
+
       } else {
         // Facility not found or invalid, clear selection state
         this.selectedFacility = null;
+        data.activities = [];
+        data.activeActivity = null;
         await this.actor.unsetFlag("shared-bastion", "selectedFacility"); // Also clear the flag
       }
     }
@@ -198,6 +206,150 @@ r("capitalize", s =>
     return data;
   }
 
+
+  /**
+   * Localize the occupant type term for notifications and prompts.
+   * @param {string} occupantType
+   * @returns {string}
+   */
+  _localizeOccupantTerm(occupantType) {
+    const key = occupantType && typeof occupantType === "string"
+      ? `shared-bastion.terms.${occupantType}`
+      : null;
+    if (key && game.i18n.has(key)) return game.i18n.localize(key);
+    return occupantType ?? "";
+  }
+
+  /**
+   * Extract the first numeric value found within the provided property paths.
+   * @param {Array<Array<string>>} paths
+   * @param {object} source
+   * @returns {number|null}
+   */
+  _extractNumber(paths, source) {
+    for (const path of paths) {
+      const value = foundry.utils.getProperty(source, path.join("."));
+      if (value === undefined || value === null) continue;
+      const num = Number(value);
+      if (!Number.isNaN(num)) return num;
+    }
+    return null;
+  }
+
+  /**
+   * Gather facility activity metadata for display in the sheet.
+   * @param {Item} facility
+   * @returns {Promise<{activities: Array, activeActivity: object|null}>}
+   */
+  async _prepareFacilityActivities(facility) {
+    const activitiesRoot = foundry.utils.getProperty(facility, "system.activities");
+    if (!activitiesRoot || typeof activitiesRoot !== "object") {
+      return { activities: [], activeActivity: null };
+    }
+
+    const results = [];
+    for (const [activityId, raw] of Object.entries(activitiesRoot)) {
+      if (!raw) continue;
+
+      const type = raw.type ?? raw.activityType ?? "";
+      const typeKey = type ? `dnd5e.activities.types.${type}` : null;
+      const typeLabel = typeKey && game.i18n.has(typeKey)
+        ? game.i18n.localize(typeKey)
+        : (type ? foundry.utils.capitalize(type) : game.i18n.localize("shared-bastion.ui.activityNameFallback"));
+      const name = raw.name ?? raw.label ?? typeLabel;
+      const disabled = raw.disabled === true || raw.enabled === false || raw.active === false;
+      const summary = raw.summary
+        ?? foundry.utils.getProperty(raw, "config.summary")
+        ?? "";
+      const targetName = foundry.utils.getProperty(raw, "config.crafting.item.name")
+        ?? foundry.utils.getProperty(raw, "config.item.name")
+        ?? foundry.utils.getProperty(raw, "item.name")
+        ?? foundry.utils.getProperty(raw, "target.name")
+        ?? "";
+      const icon = raw.img
+        ?? foundry.utils.getProperty(raw, "config.crafting.item.img")
+        ?? foundry.utils.getProperty(raw, "config.item.img")
+        ?? facility.img;
+
+      const descriptionRaw = raw.description?.value ?? raw.description ?? "";
+      let enrichedDescription = "";
+      if (descriptionRaw) {
+        try {
+          enrichedDescription = await TextEditor.enrichHTML(descriptionRaw, {
+            secrets: this.actor.isOwner,
+            rollData: this.actor.getRollData(),
+            async: true,
+            relativeTo: facility
+          });
+        } catch (err) {
+          console.warn(`Shared Bastion | Failed to enrich activity description for ${facility.name} (${activityId})`, err);
+          enrichedDescription = `<p>${foundry.utils.escapeHTML(descriptionRaw)}</p>`;
+        }
+      }
+
+      const progressCurrent = this._extractNumber([
+        ["progress", "value"],
+        ["progress", "current"],
+        ["config", "crafting", "progress", "value"],
+        ["config", "crafting", "progress", "completed"],
+        ["config", "progress", "value"]
+      ], raw);
+      const progressMax = this._extractNumber([
+        ["progress", "max"],
+        ["progress", "total"],
+        ["config", "crafting", "progress", "max"],
+        ["config", "crafting", "progress", "total"],
+        ["config", "progress", "max"]
+      ], raw);
+
+      let progress = null;
+      const done = progressMax ? Math.min(Math.max(progressCurrent ?? 0, 0), progressMax) : (progressCurrent ?? null);
+      if (progressMax && progressMax > 0) {
+        const pct = Math.min(Math.max(((done ?? 0) / progressMax) * 100, 0), 100);
+        const label = raw.progress?.label
+          ?? game.i18n.format("shared-bastion.ui.turnProgress", {
+            done: Math.round(done ?? 0),
+            total: Math.round(progressMax)
+          });
+        progress = {
+          current: done ?? 0,
+          max: progressMax,
+          percent: pct,
+          label
+        };
+      } else if (raw.progress?.label) {
+        progress = {
+          current: done ?? 0,
+          max: progressMax ?? null,
+          percent: null,
+          label: raw.progress.label
+        };
+      }
+
+      results.push({
+        id: activityId,
+        name,
+        type,
+        typeLabel,
+        targetName,
+        icon,
+        summary,
+        enrichedDescription,
+        isActive: !disabled,
+        isCrafting: (type ?? "").toLowerCase() === "crafting",
+        progress,
+        sort: Number(raw.sort ?? 0)
+      });
+    }
+
+    results.sort((a, b) => a.sort - b.sort);
+    const activeActivity = results.find(a => a.isActive && a.isCrafting)
+      ?? results.find(a => a.isActive)
+      ?? results[0]
+      ?? null;
+
+    return { activities: results, activeActivity };
+  }
 
   /**
    * Get occupants (hirelings, defenders, etc.) from a facility
@@ -558,15 +710,16 @@ r("capitalize", s =>
    */
   async _onAssignOccupant(event, occupantType) {
     event.preventDefault();
+    const occupantLabel = this._localizeOccupantTerm(occupantType);
     if (!this.selectedFacility) {
-        ui.notifications.warn("Please select a facility first.");
+        ui.notifications.warn(game.i18n.localize("shared-bastion.notifications.selectFacilityFirst"));
         return;
     }
 
     // Re-fetch the facility item to ensure we have the latest data
     const facility = this.actor.items.get(this.selectedFacility.id);
     if (!facility) {
-        ui.notifications.error("Selected facility not found.");
+        ui.notifications.error(game.i18n.localize("shared-bastion.notifications.facilityNotFound"));
         return;
     }
 
@@ -577,36 +730,41 @@ r("capitalize", s =>
     const availableSlots = maxOccupants - currentCount;
 
     if (maxOccupants <= 0) {
-      ui.notifications.warn(`This facility cannot have ${occupantType}.`);
+      ui.notifications.warn(game.i18n.format("shared-bastion.notifications.cannotHaveOccupants", { type: occupantLabel }));
       return;
     }
 
     if (availableSlots <= 0) {
-      ui.notifications.warn(`This facility already has the maximum number of ${occupantType} (${maxOccupants}).`);
-      return;
+      ui.notifications.info(game.i18n.format("shared-bastion.notifications.maxOccupantsReached", {
+        type: occupantLabel,
+        max: maxOccupants
+      }));
     }
 
     // Use dnd5e ActorSelector if available
     if (game.dnd5e?.applications?.actor?.ActorSelector) {
       try {
+        const selectKey = occupantType === this.OCCUPANT_TYPES.HIRELING
+          ? "shared-bastion.dialogs.selectHirelings"
+          : "shared-bastion.dialogs.selectDefenders";
+        const selectorTitle = game.i18n.localize(selectKey);
+        const selectorPrompt = game.i18n.format("shared-bastion.dialogs.manualSelectionPrompt", {
+          type: occupantLabel,
+          max: maxOccupants
+        });
         const selector = new game.dnd5e.applications.actor.ActorSelector({
-          title: `Select ${occupantType} (Up to ${availableSlots} more)`,
-          label: `Select ${occupantType}`,
+          title: selectorPrompt,
+          label: selectorTitle,
           type: ["character", "npc"],
           current: currentUUIDs, // Pass current UUIDs so they are pre-selected/shown
           maximum: maxOccupants, // Set the maximum allowed selection
           callback: async (uuids) => {
             // The callback provides the full list of selected UUIDs
-            if (uuids) {
-              // Ensure the list doesn't exceed the max (selector should handle this, but double-check)
+            if (Array.isArray(uuids)) {
               const finalUUIDs = uuids.slice(0, maxOccupants);
-
-              // Update the facility item directly
               await facility.update({
                 [`system.${occupantType}.value`]: finalUUIDs
               });
-
-              // Re-render this sheet to show changes
               this.render(false);
             }
           }
@@ -617,14 +775,89 @@ r("capitalize", s =>
         return; // Exit after launching the selector
       } catch (error) {
         console.error("Shared Bastion | Error using ActorSelector:", error);
-        ui.notifications.warn("Actor Selector failed. Using fallback selection.");
+        ui.notifications.warn(game.i18n.localize("shared-bastion.notifications.actorSelectorFailed"));
         // Fall through to custom dialog if ActorSelector fails
       }
     }
 
-    // --- Fallback Custom Dialog (simplified) ---
-    ui.notifications.error("Actor selection requires dnd5e system's ActorSelector (or enable it). Manual assignment not fully implemented here.");
-    // Implement the complex dialog from previous examples here if needed as a fallback.
+    const selectKey = occupantType === this.OCCUPANT_TYPES.HIRELING
+      ? "shared-bastion.dialogs.selectHirelings"
+      : "shared-bastion.dialogs.selectDefenders";
+    const selectorTitle = game.i18n.localize(selectKey);
+    const prompt = game.i18n.format("shared-bastion.dialogs.manualSelectionPrompt", {
+      type: occupantLabel,
+      max: maxOccupants
+    });
+    const hint = game.i18n.localize("shared-bastion.dialogs.manualSelectionHint");
+    const unknownLabel = game.i18n.localize("shared-bastion.ui.unknownActor");
+
+    const locale = game.i18n?.lang ?? game.i18n?.locale ?? "en";
+    const eligibleActors = (game.actors?.filter?.(actor => ["character", "npc"].includes(actor.type)) ?? [])
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", locale, { sensitivity: "base" }));
+
+    const options = [];
+    const seen = new Set();
+    const pushOption = (uuid, label) => {
+      if (!uuid || seen.has(uuid)) return;
+      const sanitized = foundry.utils.escapeHTML(String(label ?? unknownLabel));
+      const selected = currentUUIDs.includes(uuid) ? " selected" : "";
+      options.push(`<option value="${uuid}"${selected}>${sanitized}</option>`);
+      seen.add(uuid);
+    };
+
+    for (const actor of eligibleActors) {
+      pushOption(actor.uuid, actor.name);
+    }
+
+    for (const uuid of currentUUIDs) {
+      if (seen.has(uuid)) continue;
+      try {
+        const doc = await fromUuid(uuid);
+        pushOption(uuid, doc?.name ?? unknownLabel);
+      } catch (err) {
+        console.warn(`Shared Bastion | Unable to resolve occupant UUID ${uuid} during manual selection`, err);
+        pushOption(uuid, unknownLabel);
+      }
+    }
+
+    if (!options.length) {
+      ui.notifications.warn(game.i18n.localize("shared-bastion.notifications.noEligibleActors"));
+      return;
+    }
+
+    const selectSize = Math.max(4, Math.min(options.length, 10));
+    const content = `<form class="shared-bastion-selector">`
+      + `<p class="hint">${foundry.utils.escapeHTML(prompt)}</p>`
+      + `<div class="form-group"><label>${foundry.utils.escapeHTML(selectorTitle)}</label>`
+      + `<select name="occupants" multiple size="${selectSize}">${options.join("\n")}</select></div>`
+      + `<p class="hint">${foundry.utils.escapeHTML(hint)}</p>`
+      + `</form>`;
+
+    new Dialog({
+      title: selectorTitle,
+      content,
+      buttons: {
+        assign: {
+          icon: "<i class=\"fas fa-check\"></i>",
+          label: game.i18n.localize("shared-bastion.dialogs.assign"),
+          callback: async (html) => {
+            const select = html.find('select[name="occupants"]').get(0);
+            if (!select) return;
+            const selected = Array.from(select.selectedOptions ?? []).map(opt => opt.value).filter(Boolean);
+            const finalUUIDs = selected.slice(0, maxOccupants);
+            await facility.update({
+              [`system.${occupantType}.value`]: finalUUIDs
+            });
+            this.render(false);
+          }
+        },
+        cancel: {
+          icon: "<i class=\"fas fa-times\"></i>",
+          label: game.i18n.localize("shared-bastion.dialogs.cancel")
+        }
+      },
+      default: "assign"
+    }, { width: 360 }).render(true);
   }
 
 
