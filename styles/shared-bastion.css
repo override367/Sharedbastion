@@ -2,40 +2,82 @@
    SHARED-BASTION  •  Party Bastion sheet styles
    ===================================================== */
 
+.party-bastion {
+  --sb-window-bg: #1d2026;
+  --sb-surface: rgba(255, 255, 255, 0.04);
+  --sb-surface-strong: rgba(255, 255, 255, 0.12);
+  --sb-surface-hover: rgba(255, 255, 255, 0.08);
+  --sb-surface-selected: rgba(223, 160, 69, 0.3);
+  --sb-border: rgba(0, 0, 0, 0.6);
+  --sb-border-strong: rgba(255, 255, 255, 0.18);
+  --sb-accent: #d7a251;
+  --sb-text-muted: rgba(255, 255, 255, 0.65);
+  --sb-radius: 8px;
+  color: var(--color-text-light-highlight, #f1efe7);
+}
+
 /* WINDOW BACKGROUND ---------------------------------- */
-/* put a space before the slash so the shorthand parses correctly */
 .party-bastion .window-content {
-  background: url('/ui/parchment.jpg') center / cover;
+  background: linear-gradient(160deg, rgba(29, 32, 38, 0.96), rgba(14, 15, 19, 0.98));
   padding: 0;
-  overflow: hidden;        /* Prevent overall scrolling */
+  overflow: hidden;
 }
 
 /* ============  HEADER  ============ */
 .party-bastion .header-banner {
-  background: #be985a;
-  border-bottom: 1px solid #7d4e26;
-  height: 60px;            /* Smaller header height */
-  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-sizing: border-box;
+  padding: 12px 16px;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: inherit;
+}
+
+.party-bastion .header-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .party-bastion .bastion-portrait {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
-  border: 2px solid #7d4e26;
-  border-radius: 4px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  margin-right: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
-.party-bastion .header-banner h1 {
+.party-bastion .bastion-portrait:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 2px;
+}
+
+.party-bastion .header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.party-bastion .bastion-name {
   margin: 0;
-  font: 700 28px "Modesto Condensed", serif;
-  color: #1b1b1b;
+  font: 700 30px "Modesto Condensed", serif;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.party-bastion .header-subtitle {
+  font: 600 12px "Roboto Condensed", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .party-bastion .header-actions {
@@ -44,319 +86,556 @@
 }
 
 .party-bastion .open-character-sheet {
-  background: #7d4e26;
-  color: #fff;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 6px 12px;
+  font: 600 12px "Roboto Condensed", sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-light-highlight, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
 }
 
-.party-bastion .open-character-sheet:hover {
-  background: #58180d;
+.party-bastion .open-character-sheet:hover,
+.party-bastion .open-character-sheet:focus-visible {
+  background: rgba(215, 162, 81, 0.55);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 /* ============  BODY LAYOUT  ============ */
 .party-bastion .sheet-body {
-  height: calc(100% - 60px);   /* Match reduced header height */
+  height: calc(100% - 80px);
   display: flex;
   flex-direction: row;
+  background: var(--sb-surface);
 }
 
-/* ----------  Left rail (facility list)  ---------- */
 .party-bastion .left-rail {
-  /*  wider and non-shrinking */
-  flex: 0 0 240px;
+  flex: 0 0 260px;
   min-width: 240px;
   height: 100%;
   overflow-y: auto;
-  padding: 8px;
-  border-right: 1px solid #7d4e26;
+  padding: 16px 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(3px);
 }
 
-/*  Hide the plus-buttons in the rail (optional)  */
-.party-bastion .left-rail .add-facility {
-  display: none;
-}
-
-/* ----------  Right pane  ---------- */
 .party-bastion .right-pane {
   flex: 1 1 auto;
   height: 100%;
   overflow-y: auto;
-  padding: 8px 12px;
+  padding: 18px 22px 24px;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ============  FACILITY LIST  ============ */
 .party-bastion .section-header {
-  border-bottom: 1px solid #7d4e26;
   font: 700 16px "Modesto Condensed", serif;
-  margin: 0 0 8px 0;
-  padding-bottom: 3px;
-  color: #58180d;
+  color: var(--color-text-light-highlight, #f7f3ea);
+  letter-spacing: 1px;
+  margin: 0 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .party-bastion .facility-list {
   list-style: none;
-  margin: 0 0 12px;
+  margin: 0 0 18px;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .party-bastion .facility {
-  margin-bottom: 6px;
+  list-style: none;
   cursor: pointer;
-  position: relative;
+  border-radius: var(--sb-radius);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.party-bastion .facility:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 2px;
+}
+
+.party-bastion .facility-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--sb-radius);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: 76px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.18);
+}
+
+.party-bastion .facility:hover .facility-card,
+.party-bastion .facility:focus-visible .facility-card {
+  background: rgba(215, 162, 81, 0.12);
+}
+
+.party-bastion .facility.selected .facility-card {
+  background: var(--sb-surface-selected);
+  border-color: rgba(215, 162, 81, 0.9);
+  box-shadow: 0 0 0 1px rgba(215, 162, 81, 0.6), 0 8px 18px rgba(0, 0, 0, 0.32);
+}
+
+.party-bastion .facility-thumb-frame {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .party-bastion .facility-thumb {
-  width: 175px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 3px;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  display: block;
+}
+
+.party-bastion .facility-card__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .party-bastion .facility-label {
-  position: absolute;
-  left: 6px;
-  top: 4px;
-  font: 700 16px "Roboto Condensed", sans-serif;
-  color: #fff;
-  text-shadow:
-    -1px -1px #000, 1px -1px #000,
-    -1px  1px #000, 1px  1px #000;
+  font: 700 15px "Roboto Condensed", sans-serif;
+  color: var(--color-text-light-highlight, #fff);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.party-bastion .facility.selected .facility-thumb {
-  outline: 3px solid #7a2311;
+.party-bastion .facility-card__meta {
+  font: 500 11px "Roboto", sans-serif;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* "Add Facility" button (rail) – kept for other views */
-.party-bastion .empty-facility {
-  display: flex;
-  align-items: center;
-  padding: 5px;
-  font: 14px "Roboto Condensed", sans-serif;
-  color: #333;
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px dashed #7d4e26;
-  border-radius: 3px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-.party-bastion .empty-facility:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-.party-bastion .empty-facility i { margin-right: 5px; }
-
-/* ============  FACILITY DETAILS (right)  ============ */
-.party-bastion .facility-art {
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-  max-height: 180px;
-  object-fit: cover;
-  border: 2px solid #7d4e26;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.party-bastion .facility-title {
-  font: 700 24px "Modesto Condensed", serif;
-  color: #58180d;
-  margin: 0 0 6px;
-}
-
-.party-bastion .facility-stats {
-  margin-bottom: 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.1);
+.party-bastion .facility-card__chevron {
+  color: rgba(255, 255, 255, 0.4);
   font-size: 13px;
 }
 
-.party-bastion .facility-description {
-  font-size: 14px;
-  line-height: 1.35em;
-  margin-bottom: 10px;
-  padding-top: 8px;
-  border-top: 1px solid #ccc;
-}
-
-.party-bastion .no-facility-selected {
-  font-style: italic;
-  color: #666;
-  text-align: center;
-  margin-top: 80px;
-}
-
-/* ============  OCCUPANT SECTIONS  ============ */
-.party-bastion .occupant-section {
-  margin-top: 16px;
-  border-top: 1px solid #7d4e26;
-  padding-top: 8px;
-}
-
-.party-bastion .occupant-list {
+.party-bastion .empty-facility {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--sb-radius);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.2);
+  font: 600 12px "Roboto Condensed", sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: background 150ms ease, border-color 150ms ease;
 }
 
-.party-bastion .occupant-entry {
+.party-bastion .empty-facility:hover,
+.party-bastion .empty-facility:focus-visible {
+  background: rgba(215, 162, 81, 0.25);
+  border-color: rgba(215, 162, 81, 0.7);
+  color: var(--color-text-light-highlight, #fff);
+  outline: none;
+}
+
+/* ============  FACILITY DETAILS  ============ */
+.party-bastion .facility-details {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 80px;
-  position: relative;
+  gap: 18px;
 }
 
-/* Filled occupant slot */
-.party-bastion .occupant-avatar {
-  width: 64px;
-  height: 64px;
+.party-bastion .facility-summary {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.party-bastion .facility-summary__media {
+  max-width: 260px;
+}
+
+.party-bastion .facility-art {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
   object-fit: cover;
-  border: 2px solid #7d4e26;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.party-bastion .occupant-avatar:hover {
-  border-color: #58180d;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+  border-radius: var(--sb-radius);
+  border: 2px solid rgba(215, 162, 81, 0.5);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
 }
 
-.party-bastion .occupant-name {
-  font-size: 12px;
-  text-align: center;
-  margin-top: 4px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.party-bastion .facility-title {
+  margin: 0;
+  font: 700 28px "Modesto Condensed", serif;
+  letter-spacing: 1px;
+  color: var(--color-text-light-highlight, #f7f3ea);
 }
 
-.party-bastion .occupant-remove {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 18px;
-  height: 18px;
-  background: #58180d;
-  color: #fff;
-  border-radius: 50%;
+.party-bastion .facility-stats {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--sb-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 16px;
+  font: 500 12px "Roboto", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.party-bastion .facility-stats .stat-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  opacity: 0.8;
-  cursor: pointer;
-}
-.party-bastion .occupant-remove:hover { opacity: 1; }
-
-/* Empty occupant slot */
-.party-bastion .occupant-entry.empty { opacity: 0.5; }
-
-.party-bastion .occupant-placeholder {
-  width: 64px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px dashed #7d4e26;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.party-bastion .occupant-placeholder:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-.party-bastion .occupant-placeholder i {
-  font-size: 24px;
-  color: #7d4e26;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-/* Assign buttons (below occupant lists) */
-.party-bastion .assign-hireling,
-.party-bastion .assign-defender {
-  background: #7d4e26;
-  color: #fff;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-  margin-top: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.party-bastion .assign-hireling:hover,
-.party-bastion .assign-defender:hover {
-  background: #58180d;
+.party-bastion .facility-stats dt {
+  margin: 0;
+  font-weight: 600;
 }
 
-/* =====================================================
-   ORDER  +  TURN-PROGRESS BAR
-   ===================================================== */
+.party-bastion .facility-stats dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.party-bastion .facility-description {
+  padding: 16px 18px;
+  border-radius: var(--sb-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.5;
+}
+
+.party-bastion .facility-subheader {
+  margin: 0 0 10px;
+  font: 700 16px "Modesto Condensed", serif;
+  letter-spacing: 1px;
+  color: var(--color-text-light-highlight, #f7f3ea);
+  text-transform: uppercase;
+}
+
+.party-bastion .facility-description__body > *:first-child {
+  margin-top: 0;
+}
+
+.party-bastion .facility-description__body > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ============  ORDER + PROGRESS  ============ */
 .party-bastion .facility-order-progress {
-  margin-top: 10px;
-  border-top: 1px solid #7d4e26;
-  padding-top: 6px;
+  padding: 14px 18px 16px;
+  border-radius: var(--sb-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .party-bastion .order-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font: 700 14px "Roboto Condensed", sans-serif;
+  gap: 12px;
+}
+
+.party-bastion .order-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 13px "Roboto Condensed", sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-light-highlight, #fff);
+}
+
+.party-bastion .order-item {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .party-bastion .order-edit {
-  background: none;
-  border: 0;
-  color: #7d4e26;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--color-text-light-highlight, #fff);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
 }
-.party-bastion .order-edit:hover { color: #58180d; }
+
+.party-bastion .order-edit:hover,
+.party-bastion .order-edit:focus-visible {
+  background: rgba(215, 162, 81, 0.25);
+  border-color: rgba(215, 162, 81, 0.7);
+  outline: none;
+}
+
+.party-bastion .order-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: cover;
+}
 
 .party-bastion .progress-outer {
-  margin-top: 4px;
   width: 100%;
   height: 18px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid #7d4e26;
-  border-radius: 4px;
+  border-radius: 999px;
   overflow: hidden;
+  border: 1px solid rgba(215, 162, 81, 0.5);
+  background: rgba(255, 255, 255, 0.12);
 }
+
 .party-bastion .progress-inner {
   height: 100%;
-  background: linear-gradient(to right, #d5aa5a, #be7b18);
-  transition: width 0.4s ease;
+  background: linear-gradient(90deg, rgba(215, 162, 81, 0.8), rgba(255, 214, 126, 0.95));
+  transition: width 200ms ease;
 }
+
 .party-bastion .progress-text {
+  font: 600 11px "Roboto Condensed", sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   text-align: right;
-  font-size: 12px;
-  margin-top: 2px;
-  color: #333;
+  color: rgba(255, 255, 255, 0.7);
 }
-.party-bastion .order-icon{
-  width: 18px;
-  height: 18px;
+
+.party-bastion .order-details {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.party-bastion .order-details.order-description {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.party-bastion .order-details.muted {
+  color: var(--sb-text-muted);
+  font-style: italic;
+}
+
+/* ============  OCCUPANT SECTIONS  ============ */
+.party-bastion .occupant-section {
+  padding: 16px 18px 20px;
+  border-radius: var(--sb-radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.party-bastion .occupant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.party-bastion .occupant-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.party-bastion .occupant-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
   object-fit: cover;
-  border-radius: 2px;
-  margin-right: 4px;
-  vertical-align: -3px;
+  border: 2px solid rgba(215, 162, 81, 0.5);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
 }
-.party-bastion .order-label{
-  display:flex;
-  align-items:center;
-  gap:4px;
-  font-weight:700;
+
+.party-bastion .occupant-avatar:hover,
+.party-bastion .occupant-avatar:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
+  outline: 2px solid rgba(215, 162, 81, 0.85);
+  outline-offset: 2px;
+}
+
+.party-bastion .occupant-name {
+  font: 600 11px "Roboto", sans-serif;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.party-bastion .occupant-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 0;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.party-bastion .occupant-remove:hover,
+.party-bastion .occupant-remove:focus-visible {
+  background: rgba(215, 70, 70, 0.85);
+  transform: scale(1.05);
+  outline: none;
+}
+
+.party-bastion .occupant-entry.empty {
+  opacity: 0.8;
+}
+
+.party-bastion .occupant-entry[role="button"] {
+  cursor: pointer;
+}
+
+.party-bastion .occupant-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  border: 2px dashed rgba(215, 162, 81, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.party-bastion .occupant-placeholder:hover,
+.party-bastion .occupant-placeholder:focus-visible {
+  background: rgba(215, 162, 81, 0.25);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.party-bastion .occupant-placeholder i {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.party-bastion .assign-control {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(215, 162, 81, 0.2);
+  color: var(--color-text-light-highlight, #fff);
+  font: 600 12px "Roboto Condensed", sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.party-bastion .assign-control:hover,
+.party-bastion .assign-control:focus-visible {
+  background: rgba(215, 162, 81, 0.35);
+  border-color: rgba(215, 162, 81, 0.8);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.party-bastion .no-facility-selected {
+  margin: 60px auto 0;
+  max-width: 420px;
+  padding: 18px 22px;
+  border-radius: var(--sb-radius);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.2);
+  text-align: center;
+  font: 600 14px "Roboto", sans-serif;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Screen reader helper */
+.party-bastion .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .party-bastion .sheet-body {
+    flex-direction: column;
+  }
+
+  .party-bastion .left-rail {
+    flex: none;
+    min-width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .party-bastion .right-pane {
+    padding: 18px;
+  }
+
+  .party-bastion .facility-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .party-bastion .facility-summary__media {
+    max-width: 100%;
+  }
 }

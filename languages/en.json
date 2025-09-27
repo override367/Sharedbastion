@@ -17,10 +17,13 @@
       "assignDefenders": "Assign Defenders",
       "basicFacilities": "Basic Facilities",
       "specialFacilities": "Special Facilities",
+      "basicFacilityLabel": "Basic Facility",
+      "specialFacilityLabel": "Special Facility",
       "noFacilitySelected": "Select a facility on the left to view its details.",
-      "levelFacility": "Level 5 Bastion Facility",
       "prerequisite": "Prerequisite",
       "space": "Space",
+      "level": "Level",
+      "category": "Category",
       "maxHirelings": "Max Hirelings",
       "maxDefenders": "Max Defenders",
       "order": "Order",
@@ -28,7 +31,32 @@
       "assignedDefenders": "Assigned Defenders",
       "noHirelings": "No hirelings assigned to this facility.",
       "noDefenders": "No defenders assigned to this facility.",
-      "openBastion": "Open Bastion"
+      "openBastion": "Open Bastion",
+      "facilityList": "Facility List",
+      "bastionPortraitAlt": "Portrait of {name}",
+      "changeBastionPortrait": "Change Bastion portrait",
+      "facilityImageAlt": "Artwork for {name}",
+      "viewFacility": "View {name}",
+      "freeFacilitySlot": "Free Facility Slot",
+      "emptyHirelingSlot": "Empty hireling slot",
+      "emptyDefenderSlot": "Empty defender slot",
+      "assignHirelingSlot": "Assign Hireling",
+      "assignDefenderSlot": "Assign Defender",
+      "assignedHirelingsCount": "Assigned Hirelings ({count}/{max})",
+      "assignedDefendersCount": "Assigned Defenders ({count}/{max})",
+      "description": "Description",
+      "currentOrder": "Current Order",
+      "editOrder": "Edit order",
+      "turnProgress": "{done}/{total} turns",
+      "facilitySpace": "Space {value}",
+      "facilityLevelCategory": "Level {level} {category} Facility",
+      "facilityCategory": "{category} Facility",
+      "openOccupantSheet": "Open {name}'s sheet",
+      "removeOccupant": "Remove {name}",
+      "currentActivity": "Current Activity",
+      "activityNone": "No activities configured for this facility.",
+      "activityNameFallback": "Activity",
+      "unknownActor": "Unknown Actor"
     },
     "dialogs": {
       "addBasicFacility": "Add Basic Facility",
@@ -42,13 +70,24 @@
       "selectHirelings": "Select hirelings to assign to this facility",
       "selectDefenders": "Select defenders to assign to this facility",
       "maximum": "Maximum",
-      "assign": "Assign"
+      "assign": "Assign",
+      "manualSelectionHint": "Hold Ctrl (Cmd on Mac) or Shift to select multiple entries.",
+      "manualSelectionPrompt": "Select which {type} are assigned. Maximum {max}.",
+      "manualSelectionEmpty": "No eligible actors are currently available."
     },
     "notifications": {
       "bastionNotFound": "Party Bastion not found!",
-      "maxOccupantsReached": "This facility already has the maximum number of {type}.",
+      "maxOccupantsReached": "This facility already has the maximum number of {type} ({max}).",
       "cannotHaveOccupants": "This facility cannot have {type}.",
-      "couldNotOpenSheet": "Could not open sheet."
+      "couldNotOpenSheet": "Could not open sheet.",
+      "selectFacilityFirst": "Please select a facility first.",
+      "facilityNotFound": "Selected facility could not be found.",
+      "actorSelectorFailed": "Actor Selector failed. Using fallback selection.",
+      "noEligibleActors": "No eligible actors are available to assign."
+    },
+    "terms": {
+      "hirelings": "hirelings",
+      "defenders": "defenders"
     }
   }
 }
