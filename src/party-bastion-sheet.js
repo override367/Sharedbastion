@@ -24,11 +24,19 @@ static _registerHBHelpers() {
   r("divide",    (a, b) => (!b ? 0 : (Number(a) || 0) / (Number(b) || 0)));
 
   /* flow-control helpers */
-  r("let",       (v, opts) => opts.fn(v));
-  r("times",     (n, opts) => {            // repeat n times
+  r("let", (v, opts) => {
+    if (!opts?.fn) return "";
+    const data = Handlebars.createFrame(opts.data || {});
+    return opts.fn(v, { data, blockParams: [v] });
+  });
+  r("times", (n, opts) => {            // repeat n times
+    if (!opts?.fn) return "";
     let out = "";
     n = Number(n) || 0;
-    for (let i = 0; i < n; i++) out += opts.fn(i);
+    const data = Handlebars.createFrame(opts.data || {});
+    for (let i = 0; i < n; i++) {
+      out += opts.fn(i, { data, blockParams: [i] });
+    }
     return out;
   });
 

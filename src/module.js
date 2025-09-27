@@ -36,9 +36,10 @@ Handlebars.registerHelper("capitalize", s =>
   Handlebars.registerHelper("divide",   (a, b) => !b ? 0 : (Number(a) || 0) / (Number(b) || 0));
 
   /* {{#let value as |v|}} … {{/let}} — mirrors Ember’s helper */
-  Handlebars.registerHelper("let", function(value, options) {
-    // use `options.fn` so the block renders with `value` as context
-    return options.fn(value);
+  Handlebars.registerHelper("let", function(value, options = {}) {
+    if (typeof options.fn !== "function") return "";
+    const data = Handlebars.createFrame(options.data || {});
+    return options.fn(value, { data, blockParams: [value] });
   });
 
 
