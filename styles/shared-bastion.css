@@ -12,6 +12,8 @@
   --sb-border-strong: rgba(255, 255, 255, 0.18);
   --sb-accent: #d7a251;
   --sb-text-muted: rgba(255, 255, 255, 0.65);
+  --sb-pane-bg: rgba(10, 12, 18, 0.7);
+  --sb-panel-bg: rgba(5, 7, 12, 0.65);
   --sb-radius: 8px;
   color: var(--color-text-light-highlight, #f1efe7);
 }
@@ -132,7 +134,7 @@
   height: 100%;
   overflow-y: auto;
   padding: 18px 22px 24px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--sb-pane-bg);
 }
 
 /* ============  FACILITY LIST  ============ */
@@ -273,6 +275,11 @@
   grid-template-columns: minmax(180px, 240px) 1fr;
   gap: 18px;
   align-items: start;
+  background: var(--sb-panel-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--sb-radius);
+  padding: 18px 20px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.32);
 }
 
 .party-bastion .facility-summary__media {
@@ -289,6 +296,18 @@
   box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
 }
 
+.party-bastion .facility-art--interactive {
+  cursor: zoom-in;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.party-bastion .facility-art--interactive:hover,
+.party-bastion .facility-art--interactive:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+
 .party-bastion .facility-title {
   margin: 0;
   font: 700 28px "Modesto Condensed", serif;
@@ -301,7 +320,7 @@
   padding: 12px 14px;
   border-radius: var(--sb-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px 16px;
@@ -330,9 +349,9 @@
 .party-bastion .facility-description {
   padding: 16px 18px;
   border-radius: var(--sb-radius);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--sb-panel-bg);
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1.5;
 }
 
@@ -356,8 +375,8 @@
 .party-bastion .facility-order-progress {
   padding: 14px 18px 16px;
   border-radius: var(--sb-radius);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--sb-panel-bg);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -456,7 +475,7 @@
   padding: 16px 18px 20px;
   border-radius: var(--sb-radius);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--sb-panel-bg);
 }
 
 .party-bastion .occupant-grid {

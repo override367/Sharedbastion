@@ -4,6 +4,23 @@
  * Party Bastion Sheet
  * A custom actor sheet for the Party Bastion, compatible with DnD5e's Bastion system
  */
+const escapeHTML = (value) => {
+  const str = value === undefined || value === null ? "" : String(value);
+  const foundryUtils = globalThis.foundry?.utils ?? {};
+  if (typeof foundryUtils.escapeHTML === "function") return foundryUtils.escapeHTML(str);
+  if (typeof foundryUtils.escapeHtml === "function") return foundryUtils.escapeHtml(str);
+
+  const entityMap = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "`": "&#96;"
+  };
+  return str.replace(/[&<>"'`]/g, (char) => entityMap[char] ?? char);
+};
+
 export class PartyBastionSheet extends Application {
   /**
    * @param {Actor} actor - The Party Bastion actor
@@ -168,7 +185,7 @@ r("capitalize", s =>
                 });
             } catch (err) {
                 console.error(`Shared Bastion | Error enriching facility description for ${facility.name}:`, err);
-                data.enrichedDescription = `<p><i>Error displaying description.</i></p><pre>${foundry.utils.escapeHTML(description)}</pre>`; // Fallback on error
+                data.enrichedDescription = `<p><i>Error displaying description.</i></p><pre>${escapeHTML(description)}</pre>`; // Fallback on error
             }
         }
 
@@ -283,7 +300,7 @@ r("capitalize", s =>
           });
         } catch (err) {
           console.warn(`Shared Bastion | Failed to enrich activity description for ${facility.name} (${activityId})`, err);
-          enrichedDescription = `<p>${foundry.utils.escapeHTML(descriptionRaw)}</p>`;
+          enrichedDescription = `<p>${escapeHTML(descriptionRaw)}</p>`;
         }
       }
 
@@ -398,6 +415,17 @@ r("capitalize", s =>
   activateListeners(html) {
     super.activateListeners(html);
 
+    const descriptionBody = html.find(".facility-description__body");
+    if (descriptionBody.length) {
+      TextEditor.activateListeners(descriptionBody);
+    }
+    const orderDescription = html.find(".order-description");
+    if (orderDescription.length) {
+      TextEditor.activateListeners(orderDescription);
+    }
+
+    this._applyAttributionTooltips(html);
+
     const makeKeyClickable = (selector) => {
       html.find(selector).on("keydown", ev => {
         if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") {
@@ -406,6 +434,10 @@ r("capitalize", s =>
         }
       });
     };
+
+    html.find(".facility-art--interactive")
+      .on("click", this._onViewFacilityArt.bind(this));
+    makeKeyClickable(".facility-art--interactive");
 
         html.find(".order-edit")
     .on("click", this._onOrderEdit.bind(this));
@@ -706,6 +738,45 @@ r("capitalize", s =>
   }
 
   /**
+   * Pop the facility art out into an ImagePopout dialog.
+   */
+  _onViewFacilityArt(event) {
+    event.preventDefault();
+    const img = event.currentTarget;
+    if (!img) return;
+
+    const src = img.dataset?.src || img.getAttribute("src");
+    if (!src) return;
+
+    const facilityId = img.dataset?.facilityId || this.selectedFacility?.id;
+    const facility = facilityId ? this.actor.items.get(facilityId) ?? this.selectedFacility : this.selectedFacility;
+    const fallbackTitle = game.i18n?.localize?.("shared-bastion.ui.facilityArtTitle")
+      || game.i18n?.localize?.("shared-bastion.ui.facilityImageAlt")
+      || "Facility Art";
+    const title = facility?.name ? `${facility.name}` : fallbackTitle;
+
+    try {
+      const popout = new ImagePopout(src, {
+        title,
+        shareable: true,
+        uuid: facility?.uuid ?? null,
+        editable: false
+      });
+      popout.render(true, { focus: true });
+    } catch (err) {
+      console.error("Shared Bastion | Failed to open facility art popout:", err);
+      ui.notifications?.error?.(game.i18n?.localize?.("shared-bastion.notifications.openImageFailed") || "Unable to open image preview.");
+      try {
+        if (typeof window !== "undefined" && typeof window.open === "function") {
+          window.open(src, "_blank");
+        }
+      } catch (fallbackErr) {
+        console.warn("Shared Bastion | Fallback image open also failed:", fallbackErr);
+      }
+    }
+  }
+
+  /**
    * Assign occupants to the selected facility
    */
   async _onAssignOccupant(event, occupantType) {
@@ -799,9 +870,10 @@ r("capitalize", s =>
     const seen = new Set();
     const pushOption = (uuid, label) => {
       if (!uuid || seen.has(uuid)) return;
-      const sanitized = foundry.utils.escapeHTML(String(label ?? unknownLabel));
+      const sanitized = escapeHTML(label ?? unknownLabel);
       const selected = currentUUIDs.includes(uuid) ? " selected" : "";
-      options.push(`<option value="${uuid}"${selected}>${sanitized}</option>`);
+      const safeValue = escapeHTML(uuid);
+      options.push(`<option value="${safeValue}"${selected}>${sanitized}</option>`);
       seen.add(uuid);
     };
 
@@ -827,10 +899,10 @@ r("capitalize", s =>
 
     const selectSize = Math.max(4, Math.min(options.length, 10));
     const content = `<form class="shared-bastion-selector">`
-      + `<p class="hint">${foundry.utils.escapeHTML(prompt)}</p>`
-      + `<div class="form-group"><label>${foundry.utils.escapeHTML(selectorTitle)}</label>`
-      + `<select name="occupants" multiple size="${selectSize}">${options.join("\n")}</select></div>`
-      + `<p class="hint">${foundry.utils.escapeHTML(hint)}</p>`
+      + `<p class="hint">${escapeHTML(prompt)}</p>`
+      + `<div class="form-group"><label>${escapeHTML(selectorTitle)}</label>`
+        + `<select name="occupants" multiple size="${selectSize}">${options.join("\n")}</select></div>`
+      + `<p class="hint">${escapeHTML(hint)}</p>`
       + `</form>`;
 
     new Dialog({
@@ -907,7 +979,26 @@ async _onOrderEdit(ev) {
   if (Hooks.call("tidy5eSheetsFacilityOrderClicked",
                  { sheet: this, actor: this.actor, facility }) === false) return;
 
-  /* 2️⃣  Bring an already-open character sheet (any class) to front */
+  /* 2️⃣  Try to open the facility’s own sheet so the user can manage activities */
+  try {
+    let sheet = facility.sheet;
+    if (!sheet) {
+      const reg = Object.values(CONFIG.Item.sheetClasses?.facility || {}).find(r => r.default);
+      const SheetClass = reg?.cls || null;
+      if (SheetClass) {
+        sheet = new SheetClass(facility, { editable: facility.isOwner });
+      }
+    }
+
+    if (sheet) {
+      sheet.render(true, { focus: true, tab: "activities" });
+      return;
+    }
+  } catch (sheetErr) {
+    console.warn("Shared Bastion | Unable to render facility sheet for order edit:", sheetErr);
+  }
+
+  /* 3️⃣  Bring an already-open character sheet (any class) to front */
   const openSheet = Object.values(this.actor.apps)
     .find(app => app !== this && app._state > 0);
   if (openSheet) {
@@ -915,7 +1006,7 @@ async _onOrderEdit(ev) {
     return;
   }
 
-  /* 3️⃣  Otherwise create the user’s *default* character sheet
+  /* 4️⃣  Otherwise create the user’s *default* character sheet
          (this is exactly the logic used by the “Character Sheet” button) */
   try {
     const reg = Object.values(CONFIG.Actor.sheetClasses.character || {})
@@ -931,6 +1022,32 @@ async _onOrderEdit(ev) {
   } catch (err) {
     console.error("Shared Bastion | order dialog fallback failed:", err);
     ui.notifications.error("Couldn’t open the Tidy5e order editor.");
+  }
+}
+
+  /**
+   * Minimal tooltip hook so Tidy5e’s attribution system has a safe target.
+   * @param {JQuery|HTMLElement|null} target
+   */
+  _applyAttributionTooltips(target = null) {
+    try {
+      const hasJQuery = typeof jQuery !== "undefined";
+      const element = target
+        ? (hasJQuery && target instanceof jQuery ? target : (hasJQuery ? $(target) : null))
+        : this.element;
+      if (!element || !element.length) return;
+
+      const applyTo = (el) => {
+        const tooltip = el.dataset?.tooltipAttribution;
+        if (!tooltip || el.hasAttribute("title")) return;
+        el.setAttribute("title", tooltip);
+      };
+
+      if (element[0]?.dataset?.tooltipAttribution) applyTo(element[0]);
+      element.find?.('[data-tooltip-attribution]').each((_, el) => applyTo(el));
+    } catch (err) {
+      console.warn("Shared Bastion | Failed to apply attribution tooltips:", err);
+    }
   }
 }
 } // End of PartyBastionSheet class
