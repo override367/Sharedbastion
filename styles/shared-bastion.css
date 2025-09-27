@@ -372,6 +372,11 @@
   margin-bottom: 0;
 }
 
+.party-bastion .facility-description__body a,
+.party-bastion .facility-order-progress a {
+  cursor: pointer;
+}
+
 /* ============  ORDER + PROGRESS  ============ */
 .party-bastion .facility-order-progress {
   padding: 14px 18px 16px;
