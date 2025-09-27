@@ -36,6 +36,8 @@
       "bastionPortraitAlt": "Portrait of {name}",
       "changeBastionPortrait": "Change Bastion portrait",
       "facilityImageAlt": "Artwork for {name}",
+      "facilityArtTitle": "Facility Artwork",
+      "viewFacilityArt": "View facility art",
       "viewFacility": "View {name}",
       "freeFacilitySlot": "Free Facility Slot",
       "emptyHirelingSlot": "Empty hireling slot",
@@ -84,7 +86,8 @@
       "selectFacilityFirst": "Please select a facility first.",
       "facilityNotFound": "Selected facility could not be found.",
       "actorSelectorFailed": "Actor Selector failed. Using fallback selection.",
-      "noEligibleActors": "No eligible actors are available to assign."
+      "noEligibleActors": "No eligible actors are available to assign.",
+      "openImageFailed": "Unable to open the facility artwork preview."
     },
     "terms": {
       "hirelings": "hirelings",

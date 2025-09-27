@@ -130,8 +130,12 @@
             <div class="facility-summary__media">
               <img
                 src="{{selectedFacility.img}}"
-                class="facility-art"
+                class="facility-art facility-art--interactive"
                 alt="{{localize 'shared-bastion.ui.facilityImageAlt' name=selectedFacility.name}}"
+                data-facility-id="{{selectedFacility.id}}"
+                role="button"
+                tabindex="0"
+                aria-label="{{localize 'shared-bastion.ui.viewFacilityArt'}}"
               >
             </div>
             <div class="facility-summary__body">
