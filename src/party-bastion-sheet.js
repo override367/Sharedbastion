@@ -297,7 +297,6 @@ r("capitalize", s =>
         } catch (err) {
           console.warn(`Shared Bastion | Failed to resolve crafted item for ${facility.name}`, err);
         }
-      }
 
       const quantity = Number(craft.quantity ?? 0);
       if (targetName && quantity > 1) targetName = `${targetName} ×${quantity}`;
@@ -357,6 +356,233 @@ r("capitalize", s =>
       isCrafting: orderKey === "craft",
       progress: progressDisplay,
       sort: 0
+    };
+  }
+
+  _collectFacilityReferences(facility) {
+    const refs = new Set();
+    const push = (value) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        for (const v of value) push(v);
+        return;
+      }
+      if (typeof value === "object") {
+        push(value.uuid ?? value.id ?? value._id ?? value.value);
+        return;
+      }
+      if (typeof value !== "string") return;
+
+      const trimmed = value.trim();
+      if (!trimmed) return;
+      refs.add(trimmed);
+
+      if (trimmed.includes(".")) {
+        const withoutActor = trimmed.replace(/^Actor\.[^.]+\.Item\./, "");
+        if (withoutActor && withoutActor !== trimmed) refs.add(withoutActor);
+        const segments = trimmed.split(".");
+        refs.add(segments[segments.length - 1]);
+      }
+    };
+
+    push(facility?.id);
+    push(facility?.uuid);
+    push(foundry.utils.getProperty(facility, "system.actorUuid"));
+    push(foundry.utils.getProperty(facility, "system.actorId"));
+    push(foundry.utils.getProperty(facility, "flags.dnd5e.facilityUuid"));
+    push(foundry.utils.getProperty(facility, "flags.dnd5e.facilityId"));
+
+    return refs;
+  }
+
+  _activityReferencesFacility(raw, facilityRefs) {
+    if (!raw) return false;
+
+    const visited = new WeakSet();
+
+    const matches = (value) => {
+      if (!value) return false;
+      if (Array.isArray(value)) return value.some(matches);
+      if (typeof value === "object") {
+        if (visited.has(value)) return false;
+        visited.add(value);
+        const direct = [
+          value.uuid, value.id, value._id, value.value,
+          value.itemId, value.itemID, value.itemUuid, value.itemUUID,
+          value.facilityId, value.facilityID, value.facilityUuid, value.facilityUUID,
+          value.documentUuid, value.documentId
+        ];
+        if (direct.some(matches)) return true;
+        return Object.values(value).some(matches);
+      }
+      if (typeof value !== "string") return false;
+      const trimmed = value.trim();
+      if (!trimmed) return false;
+      if (facilityRefs.has(trimmed)) return true;
+      const withoutActor = trimmed.replace(/^Actor\.[^.]+\.Item\./, "");
+      if (facilityRefs.has(withoutActor)) return true;
+      const segments = trimmed.split(".");
+      return facilityRefs.has(segments[segments.length - 1]);
+    };
+
+    if (typeof raw === "string") {
+      return matches(raw);
+    }
+
+    const candidatePaths = [
+      ["facility"],
+      ["facility", "uuid"],
+      ["facilityUuid"],
+      ["facilityId"],
+      ["config", "facility"],
+      ["config", "facility", "uuid"],
+      ["config", "facilityUuid"],
+      ["config", "facilityId"],
+      ["config", "crafting", "facility"],
+      ["config", "crafting", "facility", "uuid"],
+      ["config", "crafting", "facilityUuid"],
+      ["config", "crafting", "facilityId"],
+      ["config", "crafting", "order", "facilityUuid"],
+      ["config", "crafting", "order", "facilityId"],
+      ["config", "bastion", "facilityUuid"],
+      ["config", "bastion", "facilityId"],
+      ["source", "facilityUuid"],
+      ["source", "facilityId"]
+    ];
+
+    for (const path of candidatePaths) {
+      const value = foundry.utils.getProperty(raw, path.join("."));
+      if (matches(value)) return true;
+    }
+
+    return false;
+  }
+
+  _entryReferencesFacility(entry, facilityRefs, depth = 0) {
+    if (!entry || depth > 3) return false;
+    if (typeof entry === "string") return this._activityReferencesFacility(entry, facilityRefs);
+    if (Array.isArray(entry)) return entry.some(v => this._entryReferencesFacility(v, facilityRefs, depth + 1));
+    if (typeof entry === "object" && this._activityReferencesFacility(entry, facilityRefs)) return true;
+    if (typeof entry !== "object") return false;
+
+    for (const value of Object.values(entry)) {
+      if (this._entryReferencesFacility(value, facilityRefs, depth + 1)) return true;
+    }
+    return false;
+  }
+
+  async _buildFacilityActivityDisplay(activityId, raw, facility) {
+    const type = raw.type ?? raw.activityType ?? "";
+    const typeKey = type ? `dnd5e.activities.types.${type}` : null;
+    const typeLabel = typeKey && game.i18n.has(typeKey)
+      ? game.i18n.localize(typeKey)
+      : (type ? capitalize(type) : game.i18n.localize("shared-bastion.ui.activityNameFallback"));
+    const name = foundry.utils.getProperty(raw, "name.value")
+      ?? raw.name
+      ?? foundry.utils.getProperty(raw, "label.value")
+      ?? raw.label
+      ?? typeLabel;
+    const disabledValue = foundry.utils.getProperty(raw, "disabled")
+      ?? foundry.utils.getProperty(raw, "disabled.value");
+    const enabledValue = foundry.utils.getProperty(raw, "enabled")
+      ?? foundry.utils.getProperty(raw, "enabled.value");
+    const activeValue = foundry.utils.getProperty(raw, "active")
+      ?? foundry.utils.getProperty(raw, "active.value");
+    const disabled = disabledValue === true || enabledValue === false || activeValue === false;
+    const summary = foundry.utils.getProperty(raw, "summary.value")
+      ?? raw.summary
+      ?? foundry.utils.getProperty(raw, "config.summary")
+      ?? "";
+    const targetName = foundry.utils.getProperty(raw, "config.crafting.item.name.value")
+      ?? foundry.utils.getProperty(raw, "config.crafting.item.name")
+      ?? foundry.utils.getProperty(raw, "config.item.name.value")
+      ?? foundry.utils.getProperty(raw, "config.item.name")
+      ?? foundry.utils.getProperty(raw, "item.name.value")
+      ?? foundry.utils.getProperty(raw, "item.name")
+      ?? foundry.utils.getProperty(raw, "target.name.value")
+      ?? foundry.utils.getProperty(raw, "target.name")
+      ?? "";
+    const icon = foundry.utils.getProperty(raw, "img.value")
+      ?? raw.img
+      ?? foundry.utils.getProperty(raw, "config.crafting.item.img")
+      ?? foundry.utils.getProperty(raw, "config.item.img")
+      ?? facility.img;
+
+    const descriptionRaw = foundry.utils.getProperty(raw, "description.value")
+      ?? raw.description
+      ?? "";
+    let enrichedDescription = "";
+    if (descriptionRaw) {
+      try {
+        enrichedDescription = await TextEditor.enrichHTML(descriptionRaw, {
+          secrets: this.actor.isOwner,
+          rollData: this.actor.getRollData(),
+          async: true,
+          relativeTo: facility
+        });
+      } catch (err) {
+        console.warn(`Shared Bastion | Failed to enrich activity description for ${facility.name} (${activityId})`, err);
+        enrichedDescription = `<p>${escapeHTML(descriptionRaw)}</p>`;
+      }
+    }
+
+    const progressCurrent = this._extractNumber([
+      ["progress", "value"],
+      ["progress", "current"],
+      ["config", "crafting", "progress", "value"],
+      ["config", "crafting", "progress", "completed"],
+      ["config", "progress", "value"]
+    ], raw);
+    const progressMax = this._extractNumber([
+      ["progress", "max"],
+      ["progress", "total"],
+      ["config", "crafting", "progress", "max"],
+      ["config", "crafting", "progress", "total"],
+      ["config", "progress", "max"]
+    ], raw);
+
+    let progress = null;
+    const done = progressMax ? Math.min(Math.max(progressCurrent ?? 0, 0), progressMax) : (progressCurrent ?? null);
+    if (progressMax && progressMax > 0) {
+      const pct = Math.min(Math.max(((done ?? 0) / progressMax) * 100, 0), 100);
+      const label = foundry.utils.getProperty(raw, "progress.label.value")
+        ?? raw.progress?.label
+        ?? game.i18n.format("shared-bastion.ui.turnProgress", {
+          done: Math.round(done ?? 0),
+          total: Math.round(progressMax)
+        });
+      progress = {
+        current: done ?? 0,
+        max: progressMax,
+        percent: pct,
+        label
+      };
+    } else {
+      const label = foundry.utils.getProperty(raw, "progress.label.value")
+        ?? raw.progress?.label;
+      if (label) {
+        progress = {
+          current: done ?? 0,
+          max: progressMax ?? null,
+          percent: null,
+          label
+        };
+      }
+    }
+
+    return {
+      id: activityId,
+      name,
+      type,
+      typeLabel,
+      targetName,
+      icon,
+      summary,
+      enrichedDescription,
+      isActive: !disabled,
+      isCrafting: (type ?? "").toLowerCase() === "crafting",
+      progress,
+      sort: Number(raw.sort ?? 0)
     };
   }
 
