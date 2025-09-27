@@ -177,26 +177,18 @@
             </div>
           </header>
 
-          {{#if (or activeActivity (and selectedFacility.system.order selectedFacility.system.order.type (notEq selectedFacility.system.order.type "none")))}}
+          {{#if activeActivity}}
             <section class="facility-order-progress">
               <div class="order-head">
                 <div class="order-label">
                   {{#if activeActivity.icon}}
                     <img src="{{activeActivity.icon}}" class="order-icon" alt="">
-                  {{else if (and selectedFacility.system.order selectedFacility.system.order.item.img)}}
-                    <img src="{{selectedFacility.system.order.item.img}}" class="order-icon" alt="">
                   {{/if}}
                   <span class="order-type">
-                    {{#if activeActivity}}
-                      {{activeActivity.name}}
-                    {{else}}
-                      {{capitalize selectedFacility.system.order.type}}
-                    {{/if}}
+                    {{activeActivity.name}}
                   </span>
                   {{#if activeActivity.targetName}}
                     <span class="order-item">&mdash; {{activeActivity.targetName}}</span>
-                  {{else if (and selectedFacility.system.order selectedFacility.system.order.item.name)}}
-                    <span class="order-item">&mdash; {{selectedFacility.system.order.item.name}}</span>
                   {{/if}}
                 </div>
                 <button
@@ -217,27 +209,12 @@
               {{/if}}
               {{#if (and activeActivity.progress activeActivity.progress.label)}}
                 <div class="progress-text">{{activeActivity.progress.label}}</div>
-              {{else if (and selectedFacility.system.order selectedFacility.system.order.turnsTotal)}}
-                {{#let selectedFacility.system.order.turnsTotal as |tot|}}
-                  {{#let selectedFacility.system.order.turnsRemaining as |rem|}}
-                    {{#let (subtract tot rem) as |done|}}
-                      {{#let (divide (multiply done 100) tot) as |pct|}}
-                        <div class="progress-outer" role="progressbar" aria-valuemin="0" aria-valuemax="{{tot}}" aria-valuenow="{{done}}" aria-valuetext="{{localize 'shared-bastion.ui.turnProgress' done=done total=tot}}">
-                          <div class="progress-inner" style="width: {{pct}}%;"></div>
-                        </div>
-                        <div class="progress-text">{{localize 'shared-bastion.ui.turnProgress' done=done total=tot}}</div>
-                      {{/let}}
-                    {{/let}}
-                  {{/let}}
-                {{/let}}
               {{/if}}
 
               {{#if activeActivity.summary}}
                 <p class="order-details">{{activeActivity.summary}}</p>
               {{else if activeActivity.enrichedDescription}}
                 <div class="order-details order-description">{{{activeActivity.enrichedDescription}}}</div>
-              {{else if (and selectedFacility.system.order selectedFacility.system.order.details)}}
-                <p class="order-details">{{selectedFacility.system.order.details}}</p>
               {{/if}}
             </section>
           {{else}}

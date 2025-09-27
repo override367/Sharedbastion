@@ -252,177 +252,111 @@ r("capitalize", s =>
    * @param {object} source
    * @returns {number|null}
    */
-  _extractNumber(paths, source) {
-    const tryCast = (input) => {
-      if (input === undefined || input === null) return null;
-      if (typeof input === "number") return Number.isNaN(input) ? null : input;
-      if (typeof input === "object") {
-        const candidates = ["value", "current", "max", "total"]; // common field keys
-        for (const key of candidates) {
-          if (Object.prototype.hasOwnProperty.call(input, key) || input[key] !== undefined) {
-            const nested = tryCast(input[key]);
-            if (nested !== null) return nested;
-          }
-        }
-        return null;
-      }
-      const num = Number(input);
-      return Number.isNaN(num) ? null : num;
-    };
-
-    for (const path of paths) {
-      const value = foundry.utils.getProperty(source, path.join("."));
-      const numeric = tryCast(value);
-      if (numeric !== null) return numeric;
-    }
-    return null;
-  }
-
   /**
-   * Normalize the various activity container formats exposed by dnd5e.
-   * @param {unknown} root
-   * @returns {Array<[string, any]>}
-   */
-  _collectActivityEntries(root) {
-    if (!root) return [];
-
-    const entries = [];
-    const push = (key, value) => {
-      if (!value) return;
-      const id = key ?? value?.id ?? value?.slug ?? value?.key;
-      entries.push([String(id ?? entries.length), value]);
-    };
-
-    const asArray = (value) => {
-      if (!value) return;
-      for (let i = 0; i < value.length; i++) {
-        push(value[i]?.id ?? value[i]?.slug ?? i, value[i]);
-      }
-    };
-
-    if (Array.isArray(root)) {
-      asArray(root);
-      return entries;
-    }
-
-    if (typeof root.entries === "function") {
-      try {
-        for (const [key, value] of root.entries()) {
-          push(key, value);
-        }
-        if (entries.length) return entries;
-      } catch (err) {
-        console.warn("Shared Bastion | Failed to iterate activity entries via entries():", err);
-      }
-    }
-
-    const contents = root.contents ?? root._contents ?? root.values ?? null;
-    if (Array.isArray(contents)) {
-      asArray(contents);
-      if (entries.length) return entries;
-    }
-
-    if (typeof root.toObject === "function") {
-      try {
-        const plain = root.toObject();
-        if (plain && plain !== root) {
-          return this._collectActivityEntries(plain);
-        }
-      } catch (err) {
-        console.debug("Shared Bastion | Unable to convert activity data model to object:", err);
-      }
-    }
-
-    if (typeof root === "object") {
-      for (const [key, value] of Object.entries(root)) push(key, value);
-    }
-
-    return entries;
-  }
-
-  /**
-   * Gather facility activity metadata for display in the sheet.
+   * Gather facility order metadata for display in the sheet.
    * @param {Item} facility
    * @returns {Promise<{activities: Array, activeActivity: object|null}>}
    */
   async _prepareFacilityActivities(facility) {
-    const facilityRefs = this._collectFacilityReferences(facility);
-    const rawEntries = [];
+    const activeActivity = await this._buildFacilityOrderDisplay(facility);
+    const activities = activeActivity ? [activeActivity] : [];
+    return { activities, activeActivity };
+  }
 
-    const addEntriesFrom = (root, { filter } = {}) => {
-      if (!root || (typeof root !== "object" && !Array.isArray(root))) return;
-      for (const [activityId, raw] of this._collectActivityEntries(root)) {
-        if (!raw) continue;
-        if (filter && !filter(raw)) continue;
-        rawEntries.push([activityId, raw]);
-      }
-    };
+  /**
+   * Build the display information for the facility's current order.
+   * @param {Item} facility
+   * @returns {Promise<object|null>}
+   */
+  async _buildFacilityOrderDisplay(facility) {
+    const progress = facility?.system?.progress ?? {};
+    const orderKey = (progress?.order ?? "").trim();
+    if (!orderKey || orderKey === "none") return null;
 
-    const directRoot = foundry.utils.getProperty(facility, "system.activities");
-    addEntriesFrom(directRoot);
+    const configOrders = CONFIG?.DND5E?.facilities?.orders ?? {};
+    const orderConfig = configOrders[orderKey] ?? {};
+    const localizationKey = `DND5E.FACILITY.Orders.${orderKey}.present`;
+    const name = game.i18n.has(localizationKey)
+      ? game.i18n.localize(localizationKey)
+      : capitalize(orderKey);
 
-    if (!rawEntries.length) {
-      const actorActivities = foundry.utils.getProperty(this.actor, "system.activities");
-      addEntriesFrom(actorActivities, { filter: raw => this._activityReferencesFacility(raw, facilityRefs) });
-    }
+    let icon = orderConfig.icon ?? facility.img ?? "";
+    let targetName = "";
+    let summary = "";
+    let enrichedDescription = "";
 
-    if (!rawEntries.length) {
-      const bastionData = foundry.utils.getProperty(this.actor, "system.bastion");
-      if (bastionData) {
-        const facilityData = bastionData?.facilities;
-        const entries = Array.isArray(facilityData)
-          ? facilityData
-          : facilityData?.[facility.id]
-            ? [facilityData[facility.id]]
-            : Object.values(facilityData || {});
-
-        for (const entry of entries) {
-          if (!entry) continue;
-          if (!this._entryReferencesFacility(entry, facilityRefs)) continue;
-
-          const candidateContainers = [
-            entry.activities,
-            entry.activity,
-            entry.orders,
-            entry.order,
-            entry.currentOrder
-          ];
-
-          for (const container of candidateContainers) {
-            addEntriesFrom(container, { filter: raw => this._activityReferencesFacility(raw, facilityRefs) });
+    if (orderKey === "craft") {
+      const craft = facility.system?.craft ?? {};
+      if (craft.item) {
+        try {
+          const craftedItem = await fromUuid(craft.item);
+          if (craftedItem) {
+            targetName = craftedItem.name ?? "";
+            if (craftedItem.img) icon = craftedItem.img;
           }
+        } catch (err) {
+          console.warn(`Shared Bastion | Failed to resolve crafted item for ${facility.name}`, err);
         }
 
-        const additionalContainers = [
-          bastionData.orders,
-          bastionData.queue,
-          bastionData.activities
-        ];
-
-        for (const container of additionalContainers) {
-          addEntriesFrom(container, { filter: raw => this._activityReferencesFacility(raw, facilityRefs) });
-        }
+      const quantity = Number(craft.quantity ?? 0);
+      if (targetName && quantity > 1) targetName = `${targetName} ×${quantity}`;
+      else if (!targetName && quantity > 1) targetName = `×${quantity}`;
+    } else if (orderKey === "build" || orderKey === "enlarge") {
+      const sizeKey = facility.system?.building?.size ?? facility.system?.size;
+      if (sizeKey) {
+        const sizeLocalization = `DND5E.FACILITY.Sizes.${sizeKey}`;
+        targetName = game.i18n.has(sizeLocalization)
+          ? game.i18n.localize(sizeLocalization)
+          : capitalize(sizeKey);
+      }
+    } else if (orderKey === "change") {
+      const subtype = facility.system?.type?.subtype;
+      if (subtype) {
+        const typeLocalization = `DND5E.FACILITY.Types.Special.${subtype}`;
+        targetName = game.i18n.has(typeLocalization)
+          ? game.i18n.localize(typeLocalization)
+          : capitalize(subtype);
       }
     }
 
-    const seenIds = new Set();
-    const results = [];
-    for (const [activityId, raw] of rawEntries) {
-      const normalizedId = String(activityId ?? results.length);
-      if (seenIds.has(normalizedId)) continue;
-      seenIds.add(normalizedId);
+    const disabled = facility.system?.disabled === true;
+    const progressMaxRaw = Number(progress?.max ?? 0) || 0;
+    const progressValueRaw = Number(progress?.value ?? 0) || 0;
+    const progressCurrent = progressMaxRaw > 0
+      ? Math.min(Math.max(progressValueRaw, 0), progressMaxRaw)
+      : Math.max(progressValueRaw, 0);
 
-      const display = await this._buildFacilityActivityDisplay(normalizedId, raw, facility);
-      if (display) results.push(display);
+    let progressDisplay = null;
+    if (progressMaxRaw > 0) {
+      const percent = Math.min(Math.max((progressCurrent / progressMaxRaw) * 100, 0), 100);
+      const label = game.i18n.format("shared-bastion.ui.turnProgress", {
+        done: Math.round(progressCurrent),
+        total: Math.round(progressMaxRaw)
+      });
+      progressDisplay = {
+        current: progressCurrent,
+        max: progressMaxRaw,
+        percent,
+        label
+      };
     }
 
-    results.sort((a, b) => a.sort - b.sort);
-    const activeActivity = results.find(a => a.isActive && a.isCrafting)
-      ?? results.find(a => a.isActive)
-      ?? results[0]
-      ?? null;
+    if (!summary && facility.labels?.order) summary = facility.labels.order;
 
-    return { activities: results, activeActivity };
+    return {
+      id: orderKey,
+      name,
+      type: orderKey,
+      typeLabel: name,
+      targetName,
+      icon,
+      summary,
+      enrichedDescription,
+      isActive: !disabled,
+      isCrafting: orderKey === "craft",
+      progress: progressDisplay,
+      sort: 0
+    };
   }
 
   _collectFacilityReferences(facility) {
@@ -1265,7 +1199,15 @@ async _onOrderEdit(ev) {
   if (Hooks.call("tidy5eSheetsFacilityOrderClicked",
                  { sheet: this, actor: this.actor, facility }) === false) return;
 
-  /* 2️⃣  Try to open the facility’s own sheet so the user can manage activities */
+  /* 2️⃣  Ask the system to open the order selection dialog for this facility */
+  try {
+    await facility.use({ legacy: false, chooseActivity: true, event: ev });
+    return;
+  } catch (useErr) {
+    console.warn("Shared Bastion | Failed to launch facility order dialog via Item.use:", useErr);
+  }
+
+  /* 3️⃣  Fall back to opening the facility’s own sheet so the user can manage activities */
   try {
     let sheet = facility.sheet;
     if (!sheet) {
@@ -1285,7 +1227,7 @@ async _onOrderEdit(ev) {
     console.warn("Shared Bastion | Unable to render facility sheet for order edit:", sheetErr);
   }
 
-  /* 3️⃣  Bring an already-open character sheet (any class) to front */
+  /* 4️⃣  Bring an already-open character sheet (any class) to front */
   const openSheet = Object.values(this.actor.apps)
     .find(app => app !== this && app._state > 0);
   if (openSheet) {
@@ -1293,7 +1235,7 @@ async _onOrderEdit(ev) {
     return;
   }
 
-  /* 4️⃣  Otherwise create the user’s *default* character sheet
+  /* 5️⃣  Otherwise create the user’s *default* character sheet
          (this is exactly the logic used by the “Character Sheet” button) */
   try {
     const reg = Object.values(CONFIG.Actor.sheetClasses.character || {})
