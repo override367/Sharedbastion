@@ -418,10 +418,12 @@ r("capitalize", s =>
     const descriptionBody = html.find(".facility-description__body");
     if (descriptionBody.length) {
       TextEditor.activateListeners(descriptionBody);
+      this._bindContentLinks(descriptionBody);
     }
     const orderDescription = html.find(".order-description");
     if (orderDescription.length) {
       TextEditor.activateListeners(orderDescription);
+      this._bindContentLinks(orderDescription);
     }
 
     this._applyAttributionTooltips(html);
@@ -439,8 +441,8 @@ r("capitalize", s =>
       .on("click", this._onViewFacilityArt.bind(this));
     makeKeyClickable(".facility-art--interactive");
 
-        html.find(".order-edit")
-    .on("click", this._onOrderEdit.bind(this));
+    html.find(".order-edit")
+      .on("click", this._onOrderEdit.bind(this));
     // Facility Selection
     html.find(".facility-list .facility").on('click', this._onSelectFacility.bind(this));
     makeKeyClickable(".facility-list .facility");
@@ -991,7 +993,8 @@ async _onOrderEdit(ev) {
     }
 
     if (sheet) {
-      sheet.render(true, { focus: true, tab: "activities" });
+      this._focusFacilityActivities(sheet);
+      sheet.render(true, { focus: true });
       return;
     }
   } catch (sheetErr) {
@@ -1024,6 +1027,113 @@ async _onOrderEdit(ev) {
     ui.notifications.error("Couldn’t open the Tidy5e order editor.");
   }
 }
+
+
+  /**
+   * Ensure enriched HTML links behave like on core sheets.
+   * @param {JQuery} target
+   */
+  _bindContentLinks(target) {
+    if (!target?.length) return;
+
+    target.off(".sbContentLinks");
+
+    target.on("click.sbContentLinks", "a.inline-roll", ev => {
+      if (TextEditor?._onClickInlineRoll) {
+        return TextEditor._onClickInlineRoll.call(TextEditor, ev);
+      }
+      return true;
+    });
+
+    const docLinkSelectors = [
+      "a.entity-link",
+      "a.content-link",
+      "a.uuid-link",
+      "a[data-uuid]"
+    ].join(", ");
+
+    target.on("click.sbContentLinks", docLinkSelectors, ev => {
+      if (TextEditor?._onClickContentLink) {
+        return TextEditor._onClickContentLink.call(TextEditor, ev);
+      }
+      if (TextEditor?.onClickDocumentLink) {
+        return TextEditor.onClickDocumentLink.call(TextEditor, ev);
+      }
+      if (TextEditor?._onClickDocumentLink) {
+        return TextEditor._onClickDocumentLink.call(TextEditor, ev);
+      }
+      if (TextEditor?._onClickEntityLink) {
+        return TextEditor._onClickEntityLink.call(TextEditor, ev);
+      }
+      return true;
+    });
+  }
+
+  /**
+   * Focus the Activities tab when opening a facility sheet.
+   * @param {Application} sheet
+   */
+  _focusFacilityActivities(sheet) {
+    if (!sheet) return;
+
+    const tabName = "activities";
+    const hookName = sheet.constructor?.name ? `render${sheet.constructor.name}` : null;
+
+    const attemptActivate = (app, html) => {
+      if (app && app !== sheet) return;
+
+      const tryTabsAPI = () => {
+        const groups = sheet._tabs;
+        if (!groups) return false;
+
+        const tabGroups = Array.isArray(groups) ? groups : Object.values(groups).filter(Boolean);
+        for (const group of tabGroups) {
+          if (typeof group?.activate === "function") {
+            try {
+              group.activate(tabName);
+              return true;
+            } catch (err) {
+              console.debug("Shared Bastion | Unable to activate facility activities tab via API:", err);
+            }
+          }
+        }
+        return false;
+      };
+
+      const tryDomClick = (dom) => {
+        if (typeof jQuery === "undefined") return false;
+        const $html = dom instanceof jQuery ? dom : jQuery(dom ?? sheet.element);
+        if (!$html?.length) return false;
+        const tabControl = $html.find(`[data-tab='${tabName}']`).first();
+        if (tabControl.length) {
+          tabControl.trigger("click");
+          return true;
+        }
+        return false;
+      };
+
+      const activated = tryTabsAPI() || tryDomClick(html);
+      if (!activated) {
+        setTimeout(() => {
+          tryTabsAPI() || tryDomClick(html);
+        }, 75);
+      }
+    };
+
+    if (hookName) {
+      const handler = (app, html) => {
+        Hooks.off(hookName, handler);
+        attemptActivate(app, html);
+      };
+      Hooks.on(hookName, handler);
+    } else {
+      setTimeout(() => attemptActivate(sheet, sheet.element), 25);
+    }
+
+    if (sheet.rendered && sheet.element?.length) {
+      attemptActivate(sheet, sheet.element);
+    }
+  }
 
   /**
    * Minimal tooltip hook so Tidy5e’s attribution system has a safe target.
