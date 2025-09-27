@@ -1049,7 +1049,6 @@ async _onOrderEdit(ev) {
       console.warn("Shared Bastion | Failed to apply attribution tooltips:", err);
     }
   }
-}
 } // End of PartyBastionSheet class
 
 /* ---------------------------------------------------- */
